@@ -1,0 +1,25 @@
+name: source-snapshot
+
+on:
+  push:
+    branches:
+      - "chatgpt/project-prompt"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Package source
+        run: tar --exclude=.git -czf promiseguard-source.tar.gz .
+      - name: Upload source artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: promiseguard-source
+          path: promiseguard-source.tar.gz
+          retention-days: 1
+          if-no-files-found: error
