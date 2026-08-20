@@ -14,12 +14,14 @@ from promiseguard.models import (
 class DecisionOptimizer:
     """Rank feasible actions by expected net value with deterministic tie-breaking."""
 
-    optimiser_version = "constrained-score-v1"
+    optimiser_version = "constrained-score-v2"
 
     _tie_break_priority = {
         RecoveryAction.TAKE_NO_ACTION: 0,
         RecoveryAction.REROUTE: 1,
         RecoveryAction.CARRIER_UPGRADE: 2,
+        RecoveryAction.SPLIT_SHIPMENT: 3,
+        RecoveryAction.HUMAN_ESCALATION: 4,
     }
 
     def select(self, options: tuple[RecoveryOption, ...]) -> DecisionRecommendation:

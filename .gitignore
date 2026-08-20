@@ -2,6 +2,7 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 .ruff_cache/
+.mypy_cache/
 .coverage
 htmlcov/
 .venv/
@@ -11,3 +12,9 @@ venv/
 dist/
 build/
 *.egg-info/
+promiseguard.db
+ci.db
+artifacts/models/*.joblib
+data/generated/*.jsonl
+!data/generated/.gitkeep
+!artifacts/models/.gitkeep

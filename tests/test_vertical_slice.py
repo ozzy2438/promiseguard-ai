@@ -40,7 +40,7 @@ def test_take_no_action_can_be_economically_optimal(
             "inventory_available": True,
             "carrier_on_time_probability": 0.99,
             "hours_since_expected_scan": 0.0,
-            "promised_delivery_at": at_risk_request.order.promised_delivery_at.replace(
+            "promised_delivery_at": at_risk_request.order.evaluation_time.replace(
                 hour=23
             ),
             "reroute_cost": Decimal("60.00"),

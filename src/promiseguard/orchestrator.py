@@ -1,35 +1,36 @@
-"""Closed-loop PromiseGuard orchestration for the first controlled milestone."""
+"""Closed-loop PromiseGuard orchestration for deterministic decisioning."""
 
 from __future__ import annotations
 
 from hashlib import sha256
 
-from promiseguard.ledger import InMemoryDecisionLedger
+from promiseguard.ledger import DecisionLedger, InMemoryDecisionLedger
 from promiseguard.models import (
     DecisionStatus,
     DecisionTrace,
     EvaluationRequest,
     OperatingMode,
+    PolicyEvaluation,
 )
 from promiseguard.optimizer import DecisionOptimizer
 from promiseguard.policy import PolicyGateway
-from promiseguard.risk import DeterministicRiskScorer
+from promiseguard.risk import DeterministicRiskScorer, RiskScorer
 from promiseguard.simulator import RecoverySimulator
 
 
 class PromiseGuardOrchestrator:
     """Run one order event through risk, simulation, optimisation, policy and ledger."""
 
-    trace_version = "decision-trace-v1"
+    trace_version = "decision-trace-v2"
 
     def __init__(
         self,
         *,
-        scorer: DeterministicRiskScorer | None = None,
+        scorer: RiskScorer | None = None,
         simulator: RecoverySimulator | None = None,
         optimiser: DecisionOptimizer | None = None,
         policy: PolicyGateway | None = None,
-        ledger: InMemoryDecisionLedger | None = None,
+        ledger: DecisionLedger | None = None,
     ) -> None:
         self.scorer = scorer or DeterministicRiskScorer()
         self.simulator = simulator or RecoverySimulator()
@@ -48,7 +49,7 @@ class PromiseGuardOrchestrator:
             mode=request.mode,
         )
 
-        decision_id = self._decision_id(request)
+        decision_id = self._decision_id(request, policy)
         status = self._status_for_mode(request.mode)
         trace = DecisionTrace(
             trace_version=self.trace_version,
@@ -64,7 +65,9 @@ class PromiseGuardOrchestrator:
         )
         return self.ledger.record(trace)
 
-    def _decision_id(self, request: EvaluationRequest) -> str:
+    def _decision_id(
+        self, request: EvaluationRequest, policy: PolicyEvaluation
+    ) -> str:
         identity = "|".join(
             (
                 request.event.deduplication_key,
@@ -74,6 +77,10 @@ class PromiseGuardOrchestrator:
                 self.simulator.simulator_version,
                 self.optimiser.optimiser_version,
                 self.policy.policy_version,
+                policy.control_version,
+                policy.disposition.value,
+                str(policy.execution_allowed),
+                ",".join(policy.reasons),
                 request.mode.value,
             )
         )
@@ -86,5 +93,5 @@ class PromiseGuardOrchestrator:
             OperatingMode.SHADOW: DecisionStatus.SHADOW_RECORDED,
             OperatingMode.RECOMMENDATION: DecisionStatus.RECOMMENDED,
             OperatingMode.APPROVAL: DecisionStatus.AWAITING_APPROVAL,
-            OperatingMode.BOUNDED_AUTONOMY: DecisionStatus.EXECUTION_NOT_IMPLEMENTED,
+            OperatingMode.BOUNDED_AUTONOMY: DecisionStatus.READY_FOR_EXECUTION,
         }[mode]

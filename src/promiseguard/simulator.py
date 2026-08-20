@@ -1,4 +1,4 @@
-"""Counterfactual recovery simulator for the first vertical slice."""
+"""Deterministic counterfactual recovery simulator."""
 
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ def _money(value: Decimal) -> Decimal:
 class RecoverySimulator:
     """Produce reproducible no-action and intervention outcomes."""
 
-    simulator_version = "counterfactual-rules-v1"
+    simulator_version = "counterfactual-rules-v2"
 
     def simulate(
         self, order: OrderContext, risk: RiskAssessment
@@ -40,7 +40,10 @@ class RecoverySimulator:
             )
         ]
 
-        reroute_feasible = order.alternative_location_available
+        reroute_feasible = (
+            order.alternative_location_available
+            and order.alternative_location_id is not None
+        )
         options.append(
             self._build_option(
                 action=RecoveryAction.REROUTE,
@@ -53,7 +56,7 @@ class RecoverySimulator:
                 reversible=True,
                 confidence=min(risk.confidence, order.inventory_confidence),
                 constraints=(
-                    () if reroute_feasible else ("NO_ALTERNATIVE_LOCATION_AVAILABLE",)
+                    () if reroute_feasible else ("NO_VERIFIED_ALTERNATIVE_LOCATION",)
                 ),
             )
         )
@@ -68,6 +71,25 @@ class RecoverySimulator:
                 reversible=True,
                 confidence=risk.confidence,
                 constraints=(),
+            )
+        )
+
+        options.append(
+            self._build_option(
+                action=RecoveryAction.SPLIT_SHIPMENT,
+                order=order,
+                on_time_probability=(
+                    order.split_shipment_on_time_probability
+                    if order.split_shipment_possible
+                    else 0.0
+                ),
+                intervention_cost=order.split_shipment_cost,
+                feasible=order.split_shipment_possible,
+                reversible=True,
+                confidence=min(risk.confidence, order.inventory_confidence),
+                constraints=(
+                    () if order.split_shipment_possible else ("SPLIT_SHIPMENT_NOT_FEASIBLE",)
+                ),
             )
         )
 

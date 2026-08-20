@@ -1,0 +1,25 @@
+{
+  "branch": "chatgpt/project-prompt",
+  "claim_limit": "Production-like local and synthetic evidence only; not production deployment or real revenue.",
+  "compile_check": "PASSED",
+  "coverage_percent": 92.41,
+  "docker_local_status": "NOT_AVAILABLE_IN_VALIDATION_ENVIRONMENT",
+  "evidence_classification": "LOCAL_PRODUCTION_LIKE_MILESTONE_VALIDATION",
+  "generated_at_utc": "2026-08-20T05:47:04Z",
+  "github_ci_status_at_generation": "PENDING_REMOTE_PUSH",
+  "local_python": "3.13.5",
+  "long_python_lines_over_100": 0,
+  "mypy_local_status": "NOT_RUN_DEPENDENCY_UNAVAILABLE",
+  "openai_integration": "DEFERRED_BY_OWNER",
+  "postgres_local_status": "NOT_RUN_DOCKER_UNAVAILABLE",
+  "pytest_passed": 53,
+  "ruff_local_status": "NOT_RUN_DEPENDENCY_UNAVAILABLE",
+  "sqlite_migration_status": "PASSED",
+  "sqlite_table_count_including_alembic_version": 9,
+  "synthetic_cli_smoke": {
+    "events": 8014,
+    "model": "calibrated_logistic",
+    "orders": 2000,
+    "value_evidence_classification": "SYNTHETIC_COUNTERFACTUAL_BACKTEST"
+  }
+}

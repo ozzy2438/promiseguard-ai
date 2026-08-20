@@ -1,19 +1,31 @@
-"""Deterministic risk scorer for the first vertical slice.
-
-This is intentionally not presented as a trained ML model. It provides a transparent,
-replayable baseline that allows the closed loop to be built and tested before model
-training is introduced.
-"""
+"""Risk-scoring interfaces and a transparent deterministic baseline."""
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+from typing import Protocol, runtime_checkable
+
 from promiseguard.models import OrderContext, RiskAssessment, RiskFactor
+
+
+class RiskScorer(Protocol):
+    model_version: str
+
+    def score(self, order: OrderContext) -> RiskAssessment: ...
+
+
+@runtime_checkable
+class BatchRiskScorer(RiskScorer, Protocol):
+    def score_many(self, orders: Sequence[OrderContext]) -> tuple[RiskAssessment, ...]: ...
 
 
 class DeterministicRiskScorer:
     """Calculate a bounded promise-failure probability from operational signals."""
 
-    model_version = "rules-baseline-v1"
+    model_version = "rules-baseline-v2"
+
+    def score_many(self, orders: Sequence[OrderContext]) -> tuple[RiskAssessment, ...]:
+        return tuple(self.score(order) for order in orders)
 
     def score(self, order: OrderContext) -> RiskAssessment:
         probability = 1.0 - order.carrier_on_time_probability

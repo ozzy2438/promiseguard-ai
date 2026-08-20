@@ -1,0 +1,51 @@
+version: 2
+
+models:
+  - name: stg_decisions
+    columns:
+      - name: decision_id
+        tests: [not_null, unique]
+      - name: order_id
+        tests: [not_null]
+      - name: selected_action
+        tests: [not_null]
+      - name: control_version
+        tests: [not_null]
+  - name: stg_actions
+    columns:
+      - name: action_id
+        tests: [not_null, unique]
+      - name: decision_id
+        tests: [not_null]
+  - name: stg_outcomes
+    columns:
+      - name: outcome_id
+        tests: [not_null, unique]
+      - name: decision_id
+        tests: [not_null, unique]
+  - name: stg_autonomy_profiles
+    columns:
+      - name: action
+        tests: [not_null, unique]
+      - name: level
+        tests: [not_null]
+  - name: stg_autonomy_evidence
+    columns:
+      - name: evidence_id
+        tests: [not_null, unique]
+      - name: action
+        tests: [not_null]
+  - name: stg_runtime_controls
+    columns:
+      - name: control_key
+        tests: [not_null, unique]
+  - name: fct_decision_outcomes
+    description: "Decision-to-outcome fact table for value attribution and assurance."
+    columns:
+      - name: decision_id
+        tests: [not_null, unique]
+  - name: fct_autonomy_assurance
+    description: "Current action autonomy state reconciled to immutable evidence."
+    columns:
+      - name: action
+        tests: [not_null, unique]

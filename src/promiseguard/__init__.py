@@ -1,5 +1,3 @@
-"""PromiseGuard AI core package."""
+"""PromiseGuard AI domain package."""
 
-from promiseguard.orchestrator import PromiseGuardOrchestrator
-
-__all__ = ["PromiseGuardOrchestrator"]
+__version__ = "0.3.0"

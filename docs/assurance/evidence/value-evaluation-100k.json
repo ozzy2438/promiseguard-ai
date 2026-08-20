@@ -1,0 +1,23 @@
+{
+  "action_agreement_with_ground_truth": 0.95043,
+  "claim_limit": "This report is not production revenue and must not be represented as such.",
+  "evidence_classification": "SYNTHETIC_COUNTERFACTUAL_BACKTEST",
+  "false_intervention_rate": 0.04663599354419098,
+  "intervention_rate": 0.41513,
+  "mean_on_time_probability_uplift": 0.114922152,
+  "mean_regret": "0.06",
+  "model_version": "risk-calibrated_lightgbm-3814942c3b36",
+  "optimiser_version": "constrained-score-v2",
+  "p95_regret": "0",
+  "records": 100000,
+  "selected_action_counts": {
+    "CARRIER_UPGRADE": 25264,
+    "REROUTE": 11944,
+    "SPLIT_SHIPMENT": 4305,
+    "TAKE_NO_ACTION": 58487
+  },
+  "simulated_gross_uplift_before_intervention_cost": "1156060.87",
+  "simulated_incremental_value": "646663.53",
+  "simulated_intervention_cost": "509397.34",
+  "simulator_version": "counterfactual-rules-v2"
+}

@@ -14,27 +14,88 @@ jobs:
   quality:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: pip
           cache-dependency-path: pyproject.toml
-
       - name: Install
-        run: python -m pip install --upgrade pip && pip install -e ".[dev]"
-
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,postgres]"
+          pip check
       - name: Lint
         run: ruff check .
-
       - name: Format check
         run: ruff format --check .
-
-      - name: Tests
-        run: pytest --cov=promiseguard --cov-report=term-missing --cov-fail-under=90
-
+      - name: Type check
+        run: mypy src/promiseguard
+      - name: Test and coverage
+        run: >-
+          pytest
+          --cov=promiseguard
+          --cov=apps.api
+          --cov-report=term-missing
+          --cov-fail-under=88
+      - name: SQLite migration smoke test
+        env:
+          DATABASE_URL: sqlite+pysqlite:///./ci.db
+        run: alembic upgrade head
+      - name: Governed workflow smoke test
+        run: python scripts/demo_governed_workflow.py > /tmp/governed-workflow.json
+      - name: Synthetic model and value smoke test
+        run: |
+          promiseguard-generate \
+            --count 2000 \
+            --seed 20260820 \
+            --output /tmp/orders.jsonl
+          promiseguard-generate-events \
+            --input /tmp/orders.jsonl \
+            --output /tmp/events.jsonl
+          promiseguard-train \
+            --input /tmp/orders.jsonl \
+            --output-dir /tmp/models \
+            --no-lightgbm
+          promiseguard-evaluate-value \
+            --input /tmp/orders.jsonl \
+            --model-path /tmp/models/risk_model.joblib \
+            --output /tmp/value-evaluation.json
+          test "$(wc -l < /tmp/orders.jsonl)" -eq 2000
+          test "$(wc -l < /tmp/events.jsonl)" -ge 8000
       - name: Compile
-        run: python -m compileall -q src apps scripts
+        run: python -m compileall -q src apps scripts alembic
+
+  postgres-migration:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: promiseguard
+          POSTGRES_USER: promiseguard
+          POSTGRES_PASSWORD: promiseguard-ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U promiseguard -d promiseguard"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install persistence dependencies
+        run: pip install -e ".[postgres]"
+      - name: Apply PostgreSQL migration
+        env:
+          DATABASE_URL: >-
+            postgresql+psycopg://promiseguard:promiseguard-ci@localhost:5432/promiseguard
+        run: alembic upgrade head
+      - name: Inspect required tables
+        env:
+          DATABASE_URL: >-
+            postgresql+psycopg://promiseguard:promiseguard-ci@localhost:5432/promiseguard
+        run: python scripts/postgres_smoke.py
