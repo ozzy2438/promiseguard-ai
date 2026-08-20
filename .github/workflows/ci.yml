@@ -1,0 +1,40 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - main
+      - "chatgpt/**"
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Install
+        run: python -m pip install --upgrade pip && pip install -e ".[dev]"
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Format check
+        run: ruff format --check .
+
+      - name: Tests
+        run: pytest --cov=promiseguard --cov-report=term-missing --cov-fail-under=90
+
+      - name: Compile
+        run: python -m compileall -q src apps scripts
