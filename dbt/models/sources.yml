@@ -11,3 +11,5 @@ sources:
       - name: runtime_controls
       - name: autonomy_profiles
       - name: autonomy_evidence
+      - name: openai_budgets
+      - name: openai_runs

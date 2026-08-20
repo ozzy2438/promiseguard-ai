@@ -23,7 +23,7 @@ jobs:
       - name: Install
         run: |
           python -m pip install --upgrade pip
-          pip install -e ".[dev,postgres]"
+          pip install -e ".[dev,postgres,agent]"
           pip check
       - name: Lint
         run: ruff check .
@@ -34,10 +34,13 @@ jobs:
       - name: Test and coverage
         run: >-
           pytest
+          -m "not live_openai"
           --cov=promiseguard
           --cov=apps.api
           --cov-report=term-missing
           --cov-fail-under=88
+      - name: Offline agent evals
+        run: python evals/run_local.py
       - name: SQLite migration smoke test
         env:
           DATABASE_URL: sqlite+pysqlite:///./ci.db
@@ -64,7 +67,7 @@ jobs:
           test "$(wc -l < /tmp/orders.jsonl)" -eq 2000
           test "$(wc -l < /tmp/events.jsonl)" -ge 8000
       - name: Compile
-        run: python -m compileall -q src apps scripts alembic
+        run: python -m compileall -q src apps scripts alembic evals
 
   postgres-migration:
     runs-on: ubuntu-latest
@@ -88,7 +91,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install persistence dependencies
-        run: pip install -e ".[postgres]"
+        run: pip install -e ".[postgres,agent]"
       - name: Apply PostgreSQL migration
         env:
           DATABASE_URL: >-

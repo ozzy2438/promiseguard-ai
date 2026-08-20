@@ -1,4 +1,4 @@
-"""Prometheus metrics for decisions, approvals, execution and verification."""
+"""Prometheus metrics for decisions, controls, OpenAI reviews and outcomes."""
 
 from __future__ import annotations
 
@@ -35,5 +35,29 @@ class PromiseGuardMetrics:
         self.decision_latency = Histogram(
             "promiseguard_decision_latency_seconds",
             "End-to-end deterministic decision latency.",
+            registry=self.registry,
+        )
+        self.openai_runs = Counter(
+            "promiseguard_openai_runs_total",
+            "Bounded OpenAI review runs by final status and model.",
+            ("status", "model"),
+            registry=self.registry,
+        )
+        self.openai_budget_blocks = Counter(
+            "promiseguard_openai_budget_blocks_total",
+            "OpenAI requests blocked locally before provider invocation.",
+            ("reason",),
+            registry=self.registry,
+        )
+        self.openai_cost_usd = Counter(
+            "promiseguard_openai_cost_usd_total",
+            "Application-accounted OpenAI cost in US dollars.",
+            ("model",),
+            registry=self.registry,
+        )
+        self.openai_latency = Histogram(
+            "promiseguard_openai_review_latency_seconds",
+            "Bounded OpenAI structured-review latency.",
+            ("model",),
             registry=self.registry,
         )

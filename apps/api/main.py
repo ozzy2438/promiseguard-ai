@@ -1,10 +1,11 @@
-"""FastAPI application for persistent PromiseGuard decision and action workflows."""
+"""FastAPI application for persistent PromiseGuard decisions and bounded OpenAI review."""
 
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
 import logging
 from time import perf_counter
+from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request, Response, status
 from fastapi.responses import JSONResponse
@@ -37,15 +38,37 @@ from promiseguard.observability import (
     normalise_correlation_id,
     reset_correlation_id,
 )
+from promiseguard.openai_agent import (
+    AgentOutputValidationError,
+    OpenAIAgentUnavailableError,
+    OpenAIResponseError,
+    ResponsesClient,
+)
+from promiseguard.openai_budget import (
+    OpenAIBudgetConfigurationError,
+    OpenAIBudgetExceededError,
+    OpenAIPerRunLimitError,
+    OpenAIRunNotFoundError,
+)
+from promiseguard.openai_models import (
+    AgentBudgetState,
+    AgentRunRecord,
+    AgentRunRequest,
+    AgentRunResult,
+)
 from promiseguard.persistence import PersistenceConflictError, RecordNotFoundError
 from promiseguard.services import ServiceContainer
 from promiseguard.workflow import WorkflowError
 
 
-def create_app(settings: Settings | None = None) -> FastAPI:
+def create_app(
+    settings: Settings | None = None,
+    *,
+    openai_client: ResponsesClient | None = None,
+) -> FastAPI:
     configure_json_logging()
     logger = logging.getLogger("promiseguard.api")
-    services = ServiceContainer.build(settings)
+    services = ServiceContainer.build(settings, openai_client=openai_client)
 
     @asynccontextmanager
     async def lifespan(_: FastAPI):
@@ -54,8 +77,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app = FastAPI(
         title="PromiseGuard AI",
-        version="0.3.0",
-        description="Persistent, policy-governed fulfilment recovery reference API.",
+        version="0.4.0",
+        description=(
+            "Persistent, policy-governed fulfilment recovery API with a budget-bounded "
+            "OpenAI structured-review layer."
+        ),
         lifespan=lifespan,
     )
     app.state.services = services
@@ -98,6 +124,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def not_found_handler(_, exc: RecordNotFoundError):
         return _error(status.HTTP_404_NOT_FOUND, "NOT_FOUND", str(exc))
 
+    @app.exception_handler(OpenAIRunNotFoundError)
+    async def openai_run_not_found_handler(_, exc: OpenAIRunNotFoundError):
+        return _error(status.HTTP_404_NOT_FOUND, "OPENAI_RUN_NOT_FOUND", str(exc))
+
     @app.exception_handler(PersistenceConflictError)
     async def conflict_handler(_, exc: PersistenceConflictError):
         return _error(status.HTTP_409_CONFLICT, "PERSISTENCE_CONFLICT", str(exc))
@@ -118,6 +148,50 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def workflow_handler(_, exc: WorkflowError):
         return _error(status.HTTP_409_CONFLICT, "WORKFLOW_ERROR", str(exc))
 
+    @app.exception_handler(OpenAIAgentUnavailableError)
+    async def openai_unavailable_handler(_, exc: OpenAIAgentUnavailableError):
+        return _error(
+            status.HTTP_503_SERVICE_UNAVAILABLE,
+            "OPENAI_AGENT_UNAVAILABLE",
+            str(exc),
+        )
+
+    @app.exception_handler(OpenAIBudgetExceededError)
+    async def openai_budget_handler(_, exc: OpenAIBudgetExceededError):
+        services.metrics.openai_budget_blocks.labels("PROJECT_BUDGET").inc()
+        return _error(status.HTTP_429_TOO_MANY_REQUESTS, "OPENAI_BUDGET_EXCEEDED", str(exc))
+
+    @app.exception_handler(OpenAIPerRunLimitError)
+    async def openai_run_limit_handler(_, exc: OpenAIPerRunLimitError):
+        services.metrics.openai_budget_blocks.labels("PER_RUN_LIMIT").inc()
+        return _error(status.HTTP_429_TOO_MANY_REQUESTS, "OPENAI_PER_RUN_LIMIT", str(exc))
+
+    @app.exception_handler(OpenAIBudgetConfigurationError)
+    async def openai_budget_configuration_handler(_, exc: OpenAIBudgetConfigurationError):
+        return _error(
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            "OPENAI_BUDGET_CONFIGURATION",
+            str(exc),
+        )
+
+    @app.exception_handler(AgentOutputValidationError)
+    async def openai_output_handler(_, exc: AgentOutputValidationError):
+        return _error(
+            status.HTTP_502_BAD_GATEWAY,
+            "OPENAI_OUTPUT_REJECTED",
+            str(exc),
+            {"run_id": exc.run_id, "validation_errors": list(exc.errors)},
+        )
+
+    @app.exception_handler(OpenAIResponseError)
+    async def openai_response_handler(_, exc: OpenAIResponseError):
+        return _error(
+            status.HTTP_502_BAD_GATEWAY,
+            "OPENAI_RESPONSE_ERROR",
+            "OpenAI did not produce a usable bounded review",
+            {"run_id": exc.run_id, "provider_error_code": exc.code},
+        )
+
     @app.get("/healthz")
     def health() -> dict[str, str]:
         with services.database.session() as session:
@@ -133,6 +207,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "environment": services.settings.environment,
             "scorer": services.orchestrator.scorer.model_version,
             "kill_switch": str(services.autonomy.kill_switch().active).lower(),
+            "openai_agent": (
+                "available" if services.openai_agent.available else "disabled"
+            ),
+            "openai_model": services.settings.openai_model,
         }
 
     @app.get("/v1/controls/kill-switch", response_model=KillSwitchState)
@@ -248,6 +326,36 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             services.metrics.verifications.labels(state.outcome.status.value).inc()
         return state
 
+    @app.get("/v1/agent/budget", response_model=AgentBudgetState)
+    def get_openai_budget() -> AgentBudgetState:
+        return services.openai_budget.state()
+
+    @app.get("/v1/agent/runs/{run_id}", response_model=AgentRunRecord)
+    def get_openai_run(run_id: str) -> AgentRunRecord:
+        run = services.openai_budget.get(run_id)
+        if run is None:
+            raise OpenAIRunNotFoundError(run_id)
+        return run
+
+    @app.post("/v1/agent/run", response_model=AgentRunResult)
+    def run_openai_agent(request: AgentRunRequest) -> AgentRunResult:
+        started = perf_counter()
+        try:
+            result = services.openai_agent.run(request)
+        finally:
+            services.metrics.openai_latency.labels(
+                services.settings.openai_model
+            ).observe(perf_counter() - started)
+        services.metrics.openai_runs.labels(
+            result.run.status.value,
+            result.run.model,
+        ).inc()
+        if result.run.actual_cost_usd:
+            services.metrics.openai_cost_usd.labels(result.run.model).inc(
+                float(result.run.actual_cost_usd)
+            )
+        return result
+
     @app.get("/metrics")
     def metrics() -> Response:
         return Response(
@@ -258,8 +366,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     return app
 
 
-def _error(status_code: int, code: str, message: str) -> JSONResponse:
-    return JSONResponse(
-        status_code=status_code,
-        content={"detail": {"code": code, "message": message}},
-    )
+def _error(
+    status_code: int,
+    code: str,
+    message: str,
+    extra: dict[str, Any] | None = None,
+) -> JSONResponse:
+    detail: dict[str, Any] = {"code": code, "message": message}
+    if extra:
+        detail.update(extra)
+    return JSONResponse(status_code=status_code, content={"detail": detail})

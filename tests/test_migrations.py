@@ -27,4 +27,6 @@ def test_alembic_upgrade_creates_required_evidence_tables(tmp_path) -> None:
         "runtime_controls",
         "autonomy_profiles",
         "autonomy_evidence",
+        "openai_budgets",
+        "openai_runs",
     }.issubset(tables)

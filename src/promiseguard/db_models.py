@@ -1,4 +1,4 @@
-"""Relational persistence schema for decisions, approvals, actions and outcomes."""
+"""Relational persistence schema for decisions, controls, OpenAI runs and outcomes."""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ from typing import Any
 
 from sqlalchemy import (
     JSON,
+    Boolean,
     DateTime,
     ForeignKey,
     Index,
@@ -128,7 +129,7 @@ class RuntimeControlRow(Base):
     __tablename__ = "runtime_controls"
 
     control_key: Mapped[str] = mapped_column(String(80), primary_key=True)
-    enabled: Mapped[bool] = mapped_column(nullable=False)
+    enabled: Mapped[bool] = mapped_column(Boolean, nullable=False)
     reason: Mapped[str] = mapped_column(Text, nullable=False)
     updated_by: Mapped[str] = mapped_column(String(120), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
@@ -161,6 +162,50 @@ class AutonomyEvidenceRow(Base):
         index=True,
     )
     evidence_kind: Mapped[str] = mapped_column(String(40), nullable=False)
-    successful: Mapped[bool] = mapped_column(nullable=False)
-    compensated: Mapped[bool] = mapped_column(nullable=False)
+    successful: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    compensated: Mapped[bool] = mapped_column(Boolean, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class OpenAIBudgetRow(Base):
+    __tablename__ = "openai_budgets"
+
+    budget_key: Mapped[str] = mapped_column(String(80), primary_key=True)
+    limit_usd: Mapped[Decimal] = mapped_column(Numeric(14, 6), nullable=False)
+    reserved_usd: Mapped[Decimal] = mapped_column(Numeric(14, 6), nullable=False)
+    spent_usd: Mapped[Decimal] = mapped_column(Numeric(14, 6), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    version: Mapped[int] = mapped_column(Integer, nullable=False)
+
+
+class OpenAIRunRow(Base):
+    __tablename__ = "openai_runs"
+    __table_args__ = (
+        Index("ix_openai_runs_request_status", "request_key", "status"),
+        Index("ix_openai_runs_decision_created", "decision_id", "created_at"),
+    )
+
+    run_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    request_key: Mapped[str] = mapped_column(String(64), nullable=False)
+    decision_id: Mapped[str] = mapped_column(
+        ForeignKey("decisions.decision_id", ondelete="CASCADE"), nullable=False
+    )
+    model: Mapped[str] = mapped_column(String(120), nullable=False)
+    prompt_version: Mapped[str] = mapped_column(String(120), nullable=False)
+    status: Mapped[str] = mapped_column(String(40), nullable=False)
+    context_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    reserved_cost_usd: Mapped[Decimal] = mapped_column(Numeric(14, 6), nullable=False)
+    actual_cost_usd: Mapped[Decimal] = mapped_column(Numeric(14, 6), nullable=False)
+    input_tokens: Mapped[int | None] = mapped_column(Integer)
+    cached_input_tokens: Mapped[int | None] = mapped_column(Integer)
+    output_tokens: Mapped[int | None] = mapped_column(Integer)
+    total_tokens: Mapped[int | None] = mapped_column(Integer)
+    response_id: Mapped[str | None] = mapped_column(String(160))
+    review: Mapped[dict[str, Any] | None] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    reservation_expires_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+    error_code: Mapped[str | None] = mapped_column(String(160))
+    validation_errors: Mapped[list[str]] = mapped_column(JSON, nullable=False)

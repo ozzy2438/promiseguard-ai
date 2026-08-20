@@ -15,6 +15,8 @@ REQUIRED = {
     "runtime_controls",
     "autonomy_profiles",
     "autonomy_evidence",
+    "openai_budgets",
+    "openai_runs",
 }
 
 

@@ -10,7 +10,7 @@ COPY apps ./apps
 COPY alembic.ini ./
 COPY alembic ./alembic
 RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -e ".[postgres]"
+    && pip install --no-cache-dir -e ".[postgres,agent]"
 
 EXPOSE 8000
 CMD ["sh", "-c", "alembic upgrade head && uvicorn apps.api.main:create_app --factory --host 0.0.0.0 --port 8000"]

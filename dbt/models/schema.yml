@@ -39,6 +39,22 @@ models:
     columns:
       - name: control_key
         tests: [not_null, unique]
+  - name: stg_openai_runs
+    columns:
+      - name: run_id
+        tests: [not_null, unique]
+      - name: decision_id
+        tests: [not_null]
+      - name: model
+        tests: [not_null]
+      - name: actual_cost_usd
+        tests: [not_null]
+  - name: stg_openai_budgets
+    columns:
+      - name: budget_key
+        tests: [not_null, unique]
+      - name: limit_usd
+        tests: [not_null]
   - name: fct_decision_outcomes
     description: "Decision-to-outcome fact table for value attribution and assurance."
     columns:
@@ -49,3 +65,10 @@ models:
     columns:
       - name: action
         tests: [not_null, unique]
+  - name: fct_openai_cost_assurance
+    description: "OpenAI structured-review cost, validation status and project-budget evidence."
+    columns:
+      - name: run_id
+        tests: [not_null, unique]
+      - name: decision_id
+        tests: [not_null]

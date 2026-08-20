@@ -1,7 +1,7 @@
-.PHONY: install test coverage lint format-check typecheck migrate api generate generate-events train evaluate-value demo docker-up docker-down
+.PHONY: install test coverage lint format-check typecheck migrate api generate generate-events train evaluate-value demo openai-smoke evals docker-up docker-down
 
 install:
-	python -m pip install -e ".[dev,ml,postgres]"
+	python -m pip install -e ".[dev,ml,postgres,agent]"
 
 test:
 	pytest
@@ -38,6 +38,12 @@ evaluate-value:
 
 demo:
 	python scripts/demo_governed_workflow.py
+
+openai-smoke:
+	promiseguard-openai-smoke
+
+evals:
+	python evals/run_local.py
 
 docker-up:
 	docker compose up --build

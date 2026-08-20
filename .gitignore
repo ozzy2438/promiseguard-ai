@@ -8,6 +8,7 @@ htmlcov/
 .venv/
 venv/
 .env
+.env.local
 .DS_Store
 dist/
 build/
@@ -18,3 +19,5 @@ artifacts/models/*.joblib
 data/generated/*.jsonl
 !data/generated/.gitkeep
 !artifacts/models/.gitkeep
+evals/results/*
+!evals/results/.gitignore

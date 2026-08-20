@@ -1,4 +1,4 @@
-"""Operations console for PromiseGuard decisions, approvals and safety controls."""
+"""Operations console for decisions, approvals, safety and OpenAI budget evidence."""
 
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ def api_get(path: str) -> Any:
 
 
 def api_post(path: str, payload: dict[str, Any]) -> Any:
-    response = httpx.post(f"{API_URL}{path}", json=payload, timeout=20)
+    response = httpx.post(f"{API_URL}{path}", json=payload, timeout=30)
     response.raise_for_status()
     return response.json()
 
@@ -30,11 +30,19 @@ def api_post(path: str, payload: dict[str, Any]) -> Any:
 try:
     ready = api_get("/readyz")
     kill_switch = api_get("/v1/controls/kill-switch")
+    openai_budget = api_get("/v1/agent/budget")
 except Exception as exc:
     st.error(f"API unavailable: {exc}")
     st.stop()
 
 st.sidebar.success(f"API ready · scorer {ready['scorer']}")
+st.sidebar.caption(
+    f"OpenAI: {ready['openai_agent']} · model {ready['openai_model']}"
+)
+st.sidebar.metric(
+    "OpenAI budget remaining",
+    f"US${float(openai_budget['remaining_usd']):.4f}",
+)
 if kill_switch["active"]:
     st.sidebar.error("Global action kill switch: ACTIVE")
 else:
@@ -46,6 +54,7 @@ page = st.sidebar.radio(
         "Decisions",
         "Pending approvals",
         "Decision detail",
+        "OpenAI budget & review",
         "Autonomy & safety",
     ),
 )
@@ -137,6 +146,50 @@ elif page == "Decision detail":
                 "outcome": state.get("outcome"),
             }
         )
+
+elif page == "OpenAI budget & review":
+    st.subheader("Application-enforced OpenAI budget")
+    left, middle, right = st.columns(3)
+    left.metric("Configured limit", f"US${float(openai_budget['limit_usd']):.4f}")
+    middle.metric("Accounted spend", f"US${float(openai_budget['spent_usd']):.6f}")
+    right.metric("Reserved", f"US${float(openai_budget['reserved_usd']):.6f}")
+    st.json(openai_budget)
+    st.caption(
+        "This control is enforced by PromiseGuard before a provider request. It is separate "
+        "from OpenAI Platform account or project billing controls."
+    )
+
+    decision_id = st.text_input("Decision ID for bounded review", key="agent-decision")
+    actor_id = st.text_input("Actor ID", value="operations-analyst-ui")
+    advance = st.checkbox(
+        "Submit the immutable decision after validated review",
+        value=False,
+        help="This may create an approval or enter the existing deterministic workflow. "
+        "The model cannot bypass policy or execute a different action.",
+    )
+    if st.button("Run budget-bounded OpenAI review", disabled=not decision_id):
+        try:
+            result = api_post(
+                "/v1/agent/run",
+                {
+                    "decision_id": decision_id,
+                    "actor_id": actor_id,
+                    "advance_workflow": advance,
+                },
+            )
+        except Exception as exc:
+            st.error(f"Review failed safely: {exc}")
+        else:
+            st.success(result["run"]["status"])
+            st.json(result)
+            st.rerun()
+
+    run_id = st.text_input("Existing OpenAI run ID")
+    if run_id:
+        try:
+            st.json(api_get(f"/v1/agent/runs/{run_id}"))
+        except Exception as exc:
+            st.warning(f"Run unavailable: {exc}")
 
 else:
     st.subheader("Global action kill switch")

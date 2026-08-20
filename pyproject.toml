@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "promiseguard-ai"
-version = "0.3.0"
+version = "0.4.0"
 description = "Production-grade, policy-governed order recovery decision system."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -21,6 +21,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+agent = ["openai>=2.25,<3.0"]
 ui = ["streamlit>=1.40,<2.0"]
 analytics = ["dbt-core>=1.9,<2.0", "dbt-postgres>=1.9,<2.0"]
 postgres = ["psycopg[binary]>=3.2,<4.0"]
@@ -38,6 +39,7 @@ promiseguard-generate = "promiseguard.synthetic_cli:main"
 promiseguard-generate-events = "promiseguard.synthetic_events_cli:main"
 promiseguard-train = "promiseguard.training_cli:main"
 promiseguard-evaluate-value = "promiseguard.value_evaluation_cli:main"
+promiseguard-openai-smoke = "promiseguard.openai_smoke_cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -46,7 +48,10 @@ where = ["src"]
 addopts = "-q --strict-config --strict-markers"
 pythonpath = ["src", "."]
 testpaths = ["tests"]
-markers = ["integration: persistence or multi-component workflow tests"]
+markers = [
+  "integration: persistence or multi-component workflow tests",
+  "live_openai: explicit live OpenAI request; never run in normal CI",
+]
 
 [tool.ruff]
 target-version = "py312"
@@ -63,4 +68,4 @@ indent-style = "space"
 python_version = "3.12"
 strict = true
 packages = ["promiseguard"]
-exclude = ["alembic"]
+exclude = ["alembic", "evals"]

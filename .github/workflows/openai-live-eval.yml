@@ -1,0 +1,41 @@
+name: explicit-openai-live-eval
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_spend:
+        description: "Type RUN to permit up to three tiny live model reviews"
+        required: true
+        default: "NO"
+      max_cases:
+        description: "Maximum live cases, capped at three"
+        required: true
+        default: "1"
+
+permissions:
+  contents: read
+
+jobs:
+  live-eval:
+    if: ${{ inputs.confirm_spend == 'RUN' }}
+    runs-on: ubuntu-latest
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      OPENAI_ENABLED: "true"
+      OPENAI_MODEL: "gpt-5-nano"
+      OPENAI_BUDGET_USD: "0.01"
+      OPENAI_PER_RUN_LIMIT_USD: "0.001"
+      OPENAI_MAX_OUTPUT_TOKENS: "320"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate requested case count
+        run: |
+          test "${{ inputs.max_cases }}" -ge 1
+          test "${{ inputs.max_cases }}" -le 3
+      - name: Install bounded agent path
+        run: pip install -e ".[agent]"
+      - name: Run explicit live eval
+        run: python evals/run_local.py --live --max-cases "${{ inputs.max_cases }}"

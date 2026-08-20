@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from datetime import timedelta
 from pathlib import Path
 
 from promiseguard.approval import ApprovalService
@@ -14,6 +15,8 @@ from promiseguard.evaluation import EvaluationService
 from promiseguard.execution import ActionGateway, SimulatedOperationsAdapter
 from promiseguard.ledger import SqlDecisionLedger
 from promiseguard.metrics import PromiseGuardMetrics
+from promiseguard.openai_agent import OpenAIAgentService, ResponsesClient
+from promiseguard.openai_budget import OpenAIBudgetManager
 from promiseguard.orchestrator import PromiseGuardOrchestrator
 from promiseguard.policy import PolicyGateway
 from promiseguard.risk import DeterministicRiskScorer, RiskScorer
@@ -35,10 +38,17 @@ class ServiceContainer:
     actions: ActionGateway
     verification: OutcomeVerificationService
     workflow: RecoveryWorkflowService
+    openai_budget: OpenAIBudgetManager
+    openai_agent: OpenAIAgentService
     metrics: PromiseGuardMetrics
 
     @classmethod
-    def build(cls, settings: Settings | None = None) -> ServiceContainer:
+    def build(
+        cls,
+        settings: Settings | None = None,
+        *,
+        openai_client: ResponsesClient | None = None,
+    ) -> ServiceContainer:
         resolved = settings or Settings.from_env()
         database = Database(resolved.database_url)
         if resolved.auto_create_schema:
@@ -69,6 +79,26 @@ class ServiceContainer:
             actions=actions,
             verification=verification,
         )
+        openai_budget = OpenAIBudgetManager(
+            database,
+            limit_usd=resolved.openai_budget_usd,
+            per_run_limit_usd=resolved.openai_per_run_limit_usd,
+            reservation_ttl=timedelta(
+                seconds=resolved.openai_reservation_ttl_seconds
+            ),
+        )
+        # Create or reconcile the budget row during startup. This makes the first live
+        # reservation race-free on PostgreSQL and surfaces invalid budget reductions early.
+        openai_budget.state()
+        openai_agent = OpenAIAgentService(
+            workflow=workflow,
+            budget=openai_budget,
+            model=resolved.openai_model,
+            max_output_tokens=resolved.openai_max_output_tokens,
+            timeout_seconds=resolved.openai_timeout_seconds,
+            enabled=resolved.openai_enabled,
+            client=openai_client,
+        )
         return cls(
             settings=resolved,
             database=database,
@@ -81,6 +111,8 @@ class ServiceContainer:
             actions=actions,
             verification=verification,
             workflow=workflow,
+            openai_budget=openai_budget,
+            openai_agent=openai_agent,
             metrics=PromiseGuardMetrics(),
         )
 
