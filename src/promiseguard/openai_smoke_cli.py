@@ -33,14 +33,13 @@ def main() -> None:
     services = ServiceContainer.build(settings)
     try:
         decision_id = _create_reviewable_decision(services)
+        request = AgentRunRequest(
+            decision_id=decision_id,
+            actor_id="openai-smoke",
+            advance_workflow=False,
+        )
         try:
-            result = services.openai_agent.run(
-                AgentRunRequest(
-                    decision_id=decision_id,
-                    actor_id="openai-smoke",
-                    advance_workflow=False,
-                )
-            )
+            result = services.openai_agent.run(request)
         except AgentOutputValidationError as exc:
             print(
                 json.dumps(
@@ -69,7 +68,8 @@ def main() -> None:
                 result.run.review.model_dump(mode="json") if result.run.review is not None else None
             ),
             "reused_existing_run": result.reused_existing_run,
-            "workflow_advanced": result.workflow is not None,
+            "workflow_advanced": request.advance_workflow,
+            "workflow_state_returned": result.workflow is not None,
         }
         print(json.dumps(payload, indent=2, sort_keys=True))
     finally:
