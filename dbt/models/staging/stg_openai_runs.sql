@@ -1,0 +1,21 @@
+select
+    run_id,
+    request_key,
+    decision_id,
+    model,
+    prompt_version,
+    status,
+    context_fingerprint,
+    cast(reserved_cost_usd as numeric(14, 6)) as reserved_cost_usd,
+    cast(actual_cost_usd as numeric(14, 6)) as actual_cost_usd,
+    input_tokens,
+    cached_input_tokens,
+    output_tokens,
+    total_tokens,
+    response_id,
+    created_at,
+    completed_at,
+    reservation_expires_at,
+    error_code,
+    validation_errors
+from {{ source('operational', 'openai_runs') }}

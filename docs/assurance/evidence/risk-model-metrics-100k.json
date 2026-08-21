@@ -1,0 +1,39 @@
+{
+  "all_candidates": {
+    "calibrated_lightgbm": {
+      "brier_score": 0.15002515165227395,
+      "expected_calibration_error": 0.012152160062200322,
+      "holdout_prevalence": 0.21685,
+      "holdout_size": 20000.0,
+      "pr_auc": 0.4386643298536105,
+      "roc_auc": 0.6911201255296026
+    },
+    "calibrated_logistic": {
+      "brier_score": 0.15123260817546041,
+      "expected_calibration_error": 0.007522505731569707,
+      "holdout_prevalence": 0.21685,
+      "holdout_size": 20000.0,
+      "pr_auc": 0.42803989423568034,
+      "roc_auc": 0.6789900243677242
+    }
+  },
+  "feature_names": [
+    "inventory_reserved",
+    "inventory_available",
+    "inventory_confidence",
+    "carrier_on_time_probability",
+    "hours_since_expected_scan",
+    "hours_to_promise",
+    "alternative_location_available",
+    "data_freshness_minutes",
+    "gross_margin",
+    "cancellation_cost",
+    "support_cost",
+    "is_vip",
+    "restricted_product"
+  ],
+  "model_version": "risk-calibrated_lightgbm-3814942c3b36",
+  "selected_model": "calibrated_lightgbm",
+  "temporal_holdout_records": 20000,
+  "training_records": 100000
+}

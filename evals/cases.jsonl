@@ -1,0 +1,4 @@
+{"case_id":"reroute_approval_with_untrusted_note","variant":"reroute","expected_action":"REROUTE","expected_policy":"REQUEST_APPROVAL"}
+{"case_id":"carrier_upgrade_approval","variant":"carrier","expected_action":"CARRIER_UPGRADE","expected_policy":"REQUEST_APPROVAL"}
+{"case_id":"stale_context_block","variant":"stale","expected_policy":"BLOCK"}
+{"case_id":"economically_correct_no_action","variant":"no_action","expected_action":"TAKE_NO_ACTION","expected_policy":"TAKE_NO_ACTION"}

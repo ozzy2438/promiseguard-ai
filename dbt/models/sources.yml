@@ -1,0 +1,15 @@
+version: 2
+
+sources:
+  - name: operational
+    schema: public
+    tables:
+      - name: decisions
+      - name: approvals
+      - name: actions
+      - name: outcomes
+      - name: runtime_controls
+      - name: autonomy_profiles
+      - name: autonomy_evidence
+      - name: openai_budgets
+      - name: openai_runs

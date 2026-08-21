@@ -1,0 +1,75 @@
+[build-system]
+requires = ["setuptools>=75", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "promiseguard-ai"
+version = "0.4.0"
+description = "Production-grade, policy-governed order recovery decision system."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+  "alembic>=1.14,<2.0",
+  "fastapi>=0.115,<1.0",
+  "joblib>=1.4,<2.0",
+  "numpy>=2.0,<3.0",
+  "prometheus-client>=0.21,<1.0",
+  "pydantic>=2.9,<3.0",
+  "scikit-learn>=1.6,<2.0",
+  "sqlalchemy>=2.0,<3.0",
+  "uvicorn[standard]>=0.32,<1.0",
+]
+
+[project.optional-dependencies]
+agent = ["openai>=2.25,<3.0"]
+ui = ["streamlit>=1.40,<2.0"]
+analytics = ["dbt-core>=1.9,<2.0", "dbt-postgres>=1.9,<2.0"]
+postgres = ["psycopg[binary]>=3.2,<4.0"]
+ml = ["lightgbm>=4.5,<5.0"]
+dev = [
+  "httpx>=0.27,<1.0",
+  "mypy>=1.14,<2.0",
+  "pytest>=8.3,<10.0",
+  "pytest-cov>=6.0,<8.0",
+  "ruff>=0.9,<1.0",
+]
+
+[project.scripts]
+promiseguard-generate = "promiseguard.synthetic_cli:main"
+promiseguard-generate-events = "promiseguard.synthetic_events_cli:main"
+promiseguard-train = "promiseguard.training_cli:main"
+promiseguard-evaluate-value = "promiseguard.value_evaluation_cli:main"
+promiseguard-openai-smoke = "promiseguard.openai_smoke_cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-q --strict-config --strict-markers"
+pythonpath = ["src", "."]
+testpaths = ["tests"]
+markers = [
+  "integration: persistence or multi-component workflow tests",
+  "live_openai: explicit live OpenAI request; never run in normal CI",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+packages = ["promiseguard"]
+exclude = ["alembic", "evals"]
+
+[[tool.mypy.overrides]]
+module = ["joblib", "sklearn.*", "lightgbm"]
+ignore_missing_imports = true

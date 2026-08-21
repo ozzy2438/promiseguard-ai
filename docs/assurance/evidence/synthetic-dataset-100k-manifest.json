@@ -1,0 +1,13 @@
+{
+  "artifact_committed": false,
+  "claim_limit": "The generated dataset is synthetic and is not production customer data.",
+  "count": 100000,
+  "dataset_size_bytes": 193329830,
+  "evidence_classification": "REPRODUCIBLE_SYNTHETIC_DATASET",
+  "feature_schema_version": "v1",
+  "generated_at_utc": "2026-08-20T05:33:52Z",
+  "generator": "promiseguard.synthetic.SyntheticDataGenerator",
+  "generator_seed": 20260820,
+  "local_validation_python": "3.13.5",
+  "sha256": "0234bac5db3cf1808f43a98013049cb2e1ce240666ae3bfcb984672640dd402b"
+}

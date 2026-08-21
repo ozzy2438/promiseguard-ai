@@ -1,0 +1,40 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: promiseguard
+      POSTGRES_USER: promiseguard
+      POSTGRES_PASSWORD: promiseguard-local-only
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U promiseguard -d promiseguard"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - promiseguard-postgres:/var/lib/postgresql/data
+
+  api:
+    build: .
+    environment:
+      DATABASE_URL: >-
+        postgresql+psycopg://promiseguard:promiseguard-local-only@postgres:5432/promiseguard
+      AUTO_CREATE_SCHEMA: "false"
+      PROMISEGUARD_ENV: local-docker
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_ENABLED: ${OPENAI_ENABLED:-auto}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-5-nano}
+      OPENAI_BUDGET_USD: ${OPENAI_BUDGET_USD:-3.00}
+      OPENAI_PER_RUN_LIMIT_USD: ${OPENAI_PER_RUN_LIMIT_USD:-0.001}
+      OPENAI_MAX_OUTPUT_TOKENS: ${OPENAI_MAX_OUTPUT_TOKENS:-320}
+      OPENAI_TIMEOUT_SECONDS: ${OPENAI_TIMEOUT_SECONDS:-30}
+      OPENAI_RESERVATION_TTL_SECONDS: ${OPENAI_RESERVATION_TTL_SECONDS:-600}
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  promiseguard-postgres:
