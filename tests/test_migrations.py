@@ -6,7 +6,8 @@ from sqlalchemy import create_engine, inspect
 from alembic import command
 
 
-def test_alembic_upgrade_creates_required_evidence_tables(tmp_path) -> None:
+def test_alembic_upgrade_creates_required_evidence_tables(tmp_path, monkeypatch) -> None:
+    monkeypatch.delenv("DATABASE_URL", raising=False)
     database_path = tmp_path / "migration.db"
     url = f"sqlite+pysqlite:///{database_path}"
     config = Config("alembic.ini")

@@ -9,6 +9,7 @@ from decimal import Decimal
 
 from promiseguard.config import Settings
 from promiseguard.models import OperatingMode, RecoveryAction
+from promiseguard.openai_agent import AgentOutputValidationError
 from promiseguard.openai_models import AgentRunRequest
 from promiseguard.services import ServiceContainer
 from promiseguard.synthetic import SyntheticDataGenerator
@@ -22,7 +23,7 @@ def main() -> None:
     # The smoke path can never enlarge the user's requested three-dollar ceiling.
     settings = replace(
         configured,
-        database_url="sqlite+pysqlite:///:memory:",
+        database_url=configured.database_url,
         environment="openai-smoke",
         auto_create_schema=True,
         openai_enabled=True,
@@ -32,13 +33,28 @@ def main() -> None:
     services = ServiceContainer.build(settings)
     try:
         decision_id = _create_reviewable_decision(services)
-        result = services.openai_agent.run(
-            AgentRunRequest(
-                decision_id=decision_id,
-                actor_id="openai-smoke",
-                advance_workflow=False,
+        try:
+            result = services.openai_agent.run(
+                AgentRunRequest(
+                    decision_id=decision_id,
+                    actor_id="openai-smoke",
+                    advance_workflow=False,
+                )
             )
-        )
+        except AgentOutputValidationError as exc:
+            print(
+                json.dumps(
+                    {
+                        "run_id": exc.run_id,
+                        "status": "REJECTED",
+                        "validation_errors": list(exc.errors),
+                        "budget": services.openai_budget.state().model_dump(mode="json"),
+                    },
+                    indent=2,
+                    sort_keys=True,
+                )
+            )
+            raise SystemExit(2) from exc
         payload = {
             "run_id": result.run.run_id,
             "status": result.run.status.value,

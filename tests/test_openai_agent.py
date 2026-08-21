@@ -135,6 +135,10 @@ def test_agent_uses_one_structured_call_reuses_result_and_can_create_approval(
     parsed_context = json.loads(client.last_input)
     assert "external_notes" not in parsed_context
     assert parsed_context["decision_id"] == decision.decision_id
+    expected = parsed_context["expected_review"]
+    assert expected["decision_id"] == decision.decision_id
+    assert expected["selected_action"] == decision.recommendation.selected_action.value
+    assert expected["policy_disposition"] == decision.policy.disposition.value
 
 
 def test_agent_rejects_action_override_before_workflow_advances(
