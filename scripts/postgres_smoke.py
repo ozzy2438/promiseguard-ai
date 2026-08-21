@@ -17,6 +17,7 @@ REQUIRED = {
     "autonomy_evidence",
     "openai_budgets",
     "openai_runs",
+    "operator_feedback",
 }
 
 

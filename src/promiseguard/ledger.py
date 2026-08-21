@@ -76,6 +76,8 @@ class SqlDecisionLedger:
         with self.database.session() as session:
             return self.repository.count(session)
 
-    def list_recent(self, *, limit: int = 100) -> tuple[DecisionTrace, ...]:
+    def list_recent(
+        self, *, limit: int = 100, tenant_id: str | None = None
+    ) -> tuple[DecisionTrace, ...]:
         with self.database.session() as session:
-            return self.repository.list_recent(session, limit=limit)
+            return self.repository.list_recent(session, limit=limit, tenant_id=tenant_id)

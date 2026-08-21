@@ -13,6 +13,7 @@ from promiseguard.config import Settings
 from promiseguard.database import Database
 from promiseguard.evaluation import EvaluationService
 from promiseguard.execution import ActionGateway, SimulatedOperationsAdapter
+from promiseguard.feedback import FeedbackService
 from promiseguard.ledger import SqlDecisionLedger
 from promiseguard.metrics import PromiseGuardMetrics
 from promiseguard.openai_agent import OpenAIAgentService, ResponsesClient
@@ -38,6 +39,7 @@ class ServiceContainer:
     actions: ActionGateway
     verification: OutcomeVerificationService
     workflow: RecoveryWorkflowService
+    feedback: FeedbackService
     openai_budget: OpenAIBudgetManager
     openai_agent: OpenAIAgentService
     metrics: PromiseGuardMetrics
@@ -79,6 +81,7 @@ class ServiceContainer:
             actions=actions,
             verification=verification,
         )
+        feedback = FeedbackService(database, ledger)
         openai_budget = OpenAIBudgetManager(
             database,
             limit_usd=resolved.openai_budget_usd,
@@ -109,6 +112,7 @@ class ServiceContainer:
             actions=actions,
             verification=verification,
             workflow=workflow,
+            feedback=feedback,
             openai_budget=openai_budget,
             openai_agent=openai_agent,
             metrics=PromiseGuardMetrics(),

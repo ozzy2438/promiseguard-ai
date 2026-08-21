@@ -62,6 +62,7 @@ class PromiseGuardOrchestrator:
             policy=policy,
             status=status,
             created_at=request.order.evaluation_time,
+            tenant_id=request.order.tenant_id,
         )
         return self.ledger.record(trace)
 

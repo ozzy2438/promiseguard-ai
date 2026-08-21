@@ -62,6 +62,7 @@ class OutcomeVerificationService:
             self.record_delivery_observation(observation)
 
         verified_at = now or datetime.now(UTC)
+        self.adapter.hydrate_from_durable_action(order=order, execution=execution)
         action_postcondition = self.adapter.action_postcondition_holds(
             order=order,
             action=execution.command.action,

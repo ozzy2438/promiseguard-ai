@@ -43,6 +43,7 @@ class Settings:
     openai_max_output_tokens: int = 320
     openai_timeout_seconds: float = 30.0
     openai_reservation_ttl_seconds: int = 600
+    strict_local_identity: bool = False
 
     def __post_init__(self) -> None:
         if not self.database_url:
@@ -91,4 +92,8 @@ class Settings:
             openai_max_output_tokens=int(os.getenv("OPENAI_MAX_OUTPUT_TOKENS", "320")),
             openai_timeout_seconds=float(os.getenv("OPENAI_TIMEOUT_SECONDS", "30")),
             openai_reservation_ttl_seconds=int(os.getenv("OPENAI_RESERVATION_TTL_SECONDS", "600")),
+            strict_local_identity=_parse_bool(
+                os.getenv("PROMISEGUARD_STRICT_LOCAL_IDENTITY", "false"),
+                name="PROMISEGUARD_STRICT_LOCAL_IDENTITY",
+            ),
         )

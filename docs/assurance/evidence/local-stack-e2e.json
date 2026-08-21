@@ -1,0 +1,29 @@
+{
+  "artifact_id": "local-stack-e2e-2026-08-21",
+  "evidence_classification": "LOCAL_DOCKER_INTEGRATION",
+  "claim_limit": "Production-like local Docker stack only. Not live OMS/WMS/carrier integration and not AWS deployment.",
+  "python": "3.12.13",
+  "compose_services": ["postgres", "api", "console"],
+  "api_image": "python:3.12-slim",
+  "postgres_image": "postgres:16-alpine",
+  "alembic_head": "0004_tenant_feedback",
+  "probe": {
+    "healthz": "ok",
+    "readyz": "ready",
+    "identity_mode": "strict-local",
+    "adapter_contract_version": "v1",
+    "selected_action": "REROUTE",
+    "execution_status": "SUCCEEDED",
+    "verification_status": "VERIFIED",
+    "console_reachable": true,
+    "kill_switch_probe": "blocked_execution_then_restored",
+    "restart_replay": "REPLAY_PASSED",
+    "openai_called": false
+  },
+  "host_ports_used_in_this_run": {
+    "api": 8001,
+    "console": 8501,
+    "postgres": 5433,
+    "note": "8000 and 5432 were already allocated on the owner workstation by unrelated containers."
+  }
+}

@@ -169,6 +169,7 @@ class OrderContext(StrictModel):
     split_shipment_on_time_probability: Probability = 0.0
     split_shipment_cost: NonNegativeMoney = Decimal("0")
     restricted_product: bool = False
+    tenant_id: str = Field(default="local-default", min_length=1, max_length=80)
 
     @field_validator("evaluation_time", "promised_delivery_at")
     @classmethod
@@ -257,6 +258,7 @@ class DecisionTrace(StrictModel):
     policy: PolicyEvaluation
     status: DecisionStatus
     created_at: datetime
+    tenant_id: str = "local-default"
 
 
 class ApprovalRecord(StrictModel):
@@ -349,6 +351,32 @@ class WorkflowState(StrictModel):
     approval: ApprovalRecord | None = None
     execution: ActionExecution | None = None
     outcome: OutcomeVerification | None = None
+
+
+class OperatorFeedbackInput(StrictModel):
+    actor_id: str = Field(min_length=1, max_length=120)
+    actor_role: UserRole
+    useful: bool
+    expected_outcome_matched: bool | None = None
+    comment: str = Field(min_length=3, max_length=1000)
+
+
+class OperatorFeedback(StrictModel):
+    feedback_id: str
+    decision_id: str
+    actor_id: str
+    actor_role: UserRole
+    useful: bool
+    expected_outcome_matched: bool | None = None
+    comment: str
+    created_at: datetime
+
+    @field_validator("created_at")
+    @classmethod
+    def require_feedback_timezone(cls, value: datetime) -> datetime:
+        if value.tzinfo is None or value.utcoffset() is None:
+            raise ValueError("created_at must be timezone-aware")
+        return value
 
 
 class KillSwitchState(StrictModel):

@@ -26,11 +26,13 @@ Synthetic counterfactual evaluator -> machine-readable value report
 
 ## Boundaries
 
-- OpenAI orchestration is deliberately absent until the deterministic control plane is accepted.
+- OpenAI orchestration is a budget-bounded structured-review layer. Deterministic authority stays
+  outside the model. Owner-run live smoke evidence is recorded separately from offline evals.
 - Numerical decisions are deterministic or model-backed.
 - Policy and autonomy are code and persistent data, not prompt instructions.
-- External state is mutated only through the governed action gateway.
+- External state is mutated only through the governed action gateway and versioned adapter
+  contracts. Sandbox OMS/WMS/carrier adapters are not live enterprise integrations.
 - A successful tool response is not a verified business outcome.
 - The simulator is evidence infrastructure, not a claim of real enterprise integration.
 - PostgreSQL is the target store; SQLite exists for fast isolated tests.
-- AWS deployment is intentionally deferred.
+- AWS deployment is intentionally deferred. See `docs/architecture/aws-readiness.md`.

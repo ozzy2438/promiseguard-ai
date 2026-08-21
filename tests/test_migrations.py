@@ -31,4 +31,5 @@ def test_alembic_upgrade_creates_required_evidence_tables(tmp_path, monkeypatch)
         "autonomy_evidence",
         "openai_budgets",
         "openai_runs",
+        "operator_feedback",
     }.issubset(tables)

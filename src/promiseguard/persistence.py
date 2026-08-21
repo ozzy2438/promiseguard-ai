@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 from hashlib import sha256
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from promiseguard.db_models import (
@@ -15,6 +15,7 @@ from promiseguard.db_models import (
     ApprovalRow,
     DecisionRow,
     OperationalEventRow,
+    OperatorFeedbackRow,
     OutcomeRow,
 )
 from promiseguard.models import (
@@ -23,6 +24,7 @@ from promiseguard.models import (
     ApprovalStatus,
     DecisionTrace,
     OperationalEvent,
+    OperatorFeedback,
     OutcomeVerification,
 )
 
@@ -115,6 +117,7 @@ class DecisionRepository:
                 decision_id=trace.decision_id,
                 event_id=trace.event_id,
                 order_id=trace.order_id,
+                tenant_id=trace.tenant_id,
                 trace=trace.model_dump(mode="json"),
                 fingerprint=fingerprint,
                 created_at=trace.created_at,
@@ -130,10 +133,22 @@ class DecisionRepository:
     def count(self, session: Session) -> int:
         return len(session.scalars(select(DecisionRow.decision_id)).all())
 
-    def list_recent(self, session: Session, *, limit: int = 100) -> tuple[DecisionTrace, ...]:
-        rows = session.scalars(
-            select(DecisionRow).order_by(DecisionRow.created_at.desc()).limit(limit)
-        ).all()
+    def list_recent(
+        self,
+        session: Session,
+        *,
+        limit: int = 100,
+        tenant_id: str | None = None,
+    ) -> tuple[DecisionTrace, ...]:
+        query = select(DecisionRow).order_by(DecisionRow.created_at.desc()).limit(limit)
+        if tenant_id is not None:
+            query = (
+                select(DecisionRow)
+                .where(DecisionRow.tenant_id == tenant_id)
+                .order_by(DecisionRow.created_at.desc())
+                .limit(limit)
+            )
+        rows = session.scalars(query).all()
         return tuple(DecisionTrace.model_validate(row.trace) for row in rows)
 
 
@@ -185,6 +200,30 @@ class ApprovalRepository:
         row.decided_by_role = record.decided_by_role.value if record.decided_by_role else None
         row.decision_reason = record.decision_reason
         row.decided_at = record.decided_at
+        session.flush()
+        return record
+
+    def update_if_pending(self, session: Session, record: ApprovalRecord) -> ApprovalRecord:
+        values = {
+            "status": record.status.value,
+            "decided_by": record.decided_by,
+            "decided_by_role": record.decided_by_role.value if record.decided_by_role else None,
+            "decision_reason": record.decision_reason,
+            "decided_at": record.decided_at,
+        }
+        result = session.execute(
+            update(ApprovalRow)
+            .where(
+                ApprovalRow.approval_id == record.approval_id,
+                ApprovalRow.status == ApprovalStatus.PENDING.value,
+            )
+            .values(**values)
+        )
+        if getattr(result, "rowcount", 0) != 1:
+            existing = session.get(ApprovalRow, record.approval_id)
+            if existing is None:
+                raise RecordNotFoundError(f"approval {record.approval_id!r} not found")
+            raise PersistenceConflictError("approval is no longer pending")
         session.flush()
         return record
 
@@ -341,5 +380,46 @@ class OutcomeRepository:
                 "estimated_incremental_value": row.estimated_incremental_value,
                 "evidence_references": row.evidence_references,
                 "details": row.details,
+            }
+        )
+
+
+class FeedbackRepository:
+    def record(self, session: Session, feedback: OperatorFeedback) -> OperatorFeedback:
+        session.add(
+            OperatorFeedbackRow(
+                feedback_id=feedback.feedback_id,
+                decision_id=feedback.decision_id,
+                actor_id=feedback.actor_id,
+                actor_role=feedback.actor_role.value,
+                useful=feedback.useful,
+                expected_outcome_matched=feedback.expected_outcome_matched,
+                comment=feedback.comment,
+                created_at=feedback.created_at,
+            )
+        )
+        session.flush()
+        return feedback
+
+    def list_for_decision(self, session: Session, decision_id: str) -> tuple[OperatorFeedback, ...]:
+        rows = session.scalars(
+            select(OperatorFeedbackRow)
+            .where(OperatorFeedbackRow.decision_id == decision_id)
+            .order_by(OperatorFeedbackRow.created_at)
+        ).all()
+        return tuple(self._to_model(row) for row in rows)
+
+    @staticmethod
+    def _to_model(row: OperatorFeedbackRow) -> OperatorFeedback:
+        return OperatorFeedback.model_validate(
+            {
+                "feedback_id": row.feedback_id,
+                "decision_id": row.decision_id,
+                "actor_id": row.actor_id,
+                "actor_role": row.actor_role,
+                "useful": row.useful,
+                "expected_outcome_matched": row.expected_outcome_matched,
+                "comment": row.comment,
+                "created_at": ensure_utc(row.created_at),
             }
         )

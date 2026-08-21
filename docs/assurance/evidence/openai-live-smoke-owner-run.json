@@ -1,0 +1,55 @@
+{
+  "artifact_id": "openai-live-smoke-owner-run-2026-08-21",
+  "evidence_classification": "OWNER_RUN_LIVE_API_SMOKE",
+  "claim_limit": "Records one owner-run live OpenAI structured review. Not a production accuracy claim and not business-value evidence.",
+  "recorded_at_utc": "2026-08-21T08:10:32Z",
+  "source": "Owner-run promiseguard-openai-smoke against local SQLite evidence DB. Exported without making another paid API call.",
+  "model": "gpt-5-nano",
+  "prompt_version": "promiseguard-openai-review-v2",
+  "run_id": "llm_c556f34451c2169ac89b26c0",
+  "decision_id": "dec_a45173aa356fd5a967091a3a",
+  "provider_response_id": "resp_077eea7d40ad981f016a8807f5cac887d0a9b078902cf9ce9d",
+  "status": "COMPLETED",
+  "validation_errors": [],
+  "deterministic_validation": "PASSED",
+  "workflow_advanced": false,
+  "error_occurred": false,
+  "usage": {
+    "input_tokens": 1472,
+    "cached_input_tokens": 0,
+    "output_tokens": 240,
+    "total_tokens": 1712
+  },
+  "cost_usd": {
+    "reserved": "0.000187",
+    "actual": "0.000170",
+    "currency": "USD"
+  },
+  "budget_usd": {
+    "key": "promiseguard-openai",
+    "limit": "3.00",
+    "spent_after_run": "0.000170",
+    "enforcement": "application-enforced project ceiling"
+  },
+  "review": {
+    "decision_id": "dec_a45173aa356fd5a967091a3a",
+    "selected_action": "SPLIT_SHIPMENT",
+    "policy_disposition": "REQUEST_APPROVAL",
+    "next_step": "SUBMIT_DECISION",
+    "rationale_codes": ["APPROVAL_REQUIRED"],
+    "requires_human_attention": true,
+    "uncertainty": 0.0,
+    "summary": "Proceed with SPLIT_SHIPMENT after pursuing required approval to align with policy constraints. Evidence supports split approach; human review needed."
+  },
+  "redactions": [
+    "OPENAI_API_KEY was never written to this artifact",
+    "customer identifiers were not present in the model context",
+    "operational free-text notes were excluded by the smoke path"
+  ],
+  "not_claimed": [
+    "production model accuracy",
+    "real company revenue",
+    "live OMS/WMS/carrier integration",
+    "additional live calls beyond this owner-run smoke"
+  ]
+}

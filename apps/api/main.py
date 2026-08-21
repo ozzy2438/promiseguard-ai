@@ -12,10 +12,12 @@ from fastapi.responses import JSONResponse
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from sqlalchemy import text
 
+from promiseguard.adapters.errors import AdapterError, AdapterRateLimited
 from promiseguard.approval import ApprovalError
 from promiseguard.autonomy import AutonomyControlError
 from promiseguard.config import Settings
 from promiseguard.execution import ActionExecutionError
+from promiseguard.identity import IdentityError
 from promiseguard.models import (
     ActionExecution,
     ApprovalDecisionInput,
@@ -28,6 +30,8 @@ from promiseguard.models import (
     KillSwitchState,
     KillSwitchUpdateInput,
     OperatingMode,
+    OperatorFeedback,
+    OperatorFeedbackInput,
     RecoveryAction,
     SubmitDecisionInput,
     WorkflowState,
@@ -58,6 +62,7 @@ from promiseguard.openai_models import (
 )
 from promiseguard.persistence import PersistenceConflictError, RecordNotFoundError
 from promiseguard.services import ServiceContainer
+from promiseguard.value_design import LOCAL_VALUE_DESIGNS
 from promiseguard.workflow import WorkflowError
 
 
@@ -77,7 +82,7 @@ def create_app(
 
     app = FastAPI(
         title="PromiseGuard AI",
-        version="0.4.0",
+        version="0.5.0",
         description=(
             "Persistent, policy-governed fulfilment recovery API with a budget-bounded "
             "OpenAI structured-review layer."
@@ -137,6 +142,22 @@ def create_app(
     @app.exception_handler(ActionExecutionError)
     async def action_handler(_, exc: ActionExecutionError):
         return _error(status.HTTP_409_CONFLICT, "ACTION_EXECUTION_ERROR", str(exc))
+
+    @app.exception_handler(AdapterRateLimited)
+    async def adapter_rate_limit_handler(_, exc: AdapterRateLimited):
+        return _error(status.HTTP_429_TOO_MANY_REQUESTS, "ADAPTER_RATE_LIMITED", str(exc))
+
+    @app.exception_handler(AdapterError)
+    async def adapter_handler(_, exc: AdapterError):
+        return _error(
+            status.HTTP_409_CONFLICT,
+            f"ADAPTER_{exc.error_class.value}",
+            str(exc),
+        )
+
+    @app.exception_handler(IdentityError)
+    async def identity_handler(_, exc: IdentityError):
+        return _error(status.HTTP_403_FORBIDDEN, "IDENTITY_ERROR", str(exc))
 
     @app.exception_handler(AutonomyControlError)
     async def autonomy_handler(_, exc: AutonomyControlError):
@@ -207,6 +228,10 @@ def create_app(
             "kill_switch": str(services.autonomy.kill_switch().active).lower(),
             "openai_agent": ("available" if services.openai_agent.available else "disabled"),
             "openai_model": services.settings.openai_model,
+            "identity_mode": (
+                "strict-local" if services.settings.strict_local_identity else "local-permissive"
+            ),
+            "adapter_contract_version": "v1",
         }
 
     @app.get("/v1/controls/kill-switch", response_model=KillSwitchState)
@@ -249,13 +274,18 @@ def create_app(
         return evaluate(shadow)
 
     @app.get("/v1/decisions", response_model=tuple[DecisionTrace, ...])
-    def list_decisions(limit: int = 100) -> tuple[DecisionTrace, ...]:
+    def list_decisions(
+        request: Request,
+        limit: int = 100,
+        tenant_id: str | None = None,
+    ) -> tuple[DecisionTrace, ...]:
         if limit < 1 or limit > 500:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail="limit must be between 1 and 500",
             )
-        return services.ledger.list_recent(limit=limit)
+        resolved_tenant = tenant_id or request.headers.get("X-Tenant-ID")
+        return services.ledger.list_recent(limit=limit, tenant_id=resolved_tenant)
 
     @app.get("/v1/decisions/{decision_id}", response_model=WorkflowState)
     def get_decision(decision_id: str) -> WorkflowState:
@@ -304,6 +334,18 @@ def create_app(
         if state.approval is not None:
             services.metrics.approvals.labels(state.approval.status.value).inc()
         return state
+
+    @app.post("/v1/decisions/{decision_id}/feedback", response_model=OperatorFeedback)
+    def record_feedback(decision_id: str, payload: OperatorFeedbackInput) -> OperatorFeedback:
+        return services.feedback.record(decision_id, payload)
+
+    @app.get("/v1/decisions/{decision_id}/feedback", response_model=tuple[OperatorFeedback, ...])
+    def list_feedback(decision_id: str) -> tuple[OperatorFeedback, ...]:
+        return services.feedback.list_for_decision(decision_id)
+
+    @app.get("/v1/value/designs")
+    def list_value_designs() -> list[dict[str, object]]:
+        return [spec.model_dump(mode="json") for spec in LOCAL_VALUE_DESIGNS]
 
     @app.get("/v1/actions/{action_id}", response_model=ActionExecution)
     def get_action(action_id: str) -> ActionExecution:
