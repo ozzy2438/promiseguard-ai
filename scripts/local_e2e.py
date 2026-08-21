@@ -67,12 +67,27 @@ def _wait_for_api(api_url: str, wait_seconds: int) -> dict[str, object]:
 
 
 def _console_reachable(console_url: str) -> bool:
-    try:
-        req = urllib.request.Request(console_url, method="GET")
-        with urllib.request.urlopen(req, timeout=10) as response:
-            return 200 <= response.status < 400
-    except Exception:
-        return False
+    base = console_url.rstrip("/")
+    for path in ("/_stcore/health", "/"):
+        try:
+            req = urllib.request.Request(f"{base}{path}", method="GET")
+            with urllib.request.urlopen(req, timeout=10) as response:
+                if 200 <= response.status < 400:
+                    return True
+        except Exception:
+            continue
+    return False
+
+
+def _wait_for_console(console_url: str, wait_seconds: int) -> None:
+    deadline = time.time() + wait_seconds
+    last_error = "not attempted"
+    while time.time() < deadline:
+        if _console_reachable(console_url):
+            return
+        last_error = f"no healthy response from {console_url}"
+        time.sleep(2)
+    raise SystemExit(f"Streamlit console was not reachable within {wait_seconds}s: {last_error}")
 
 
 def _order_payload(suffix: str, *, tenant_id: str) -> dict[str, object]:
@@ -131,7 +146,7 @@ def _require(ok: bool, message: str) -> None:
         raise SystemExit(message)
 
 
-def _run_fresh(api_url: str, console_url: str) -> dict[str, object]:
+def _run_fresh(api_url: str, console_url: str, wait_seconds: int) -> dict[str, object]:
     suffix = uuid4().hex[:12]
     tenant_id = "local-default"
     payload = _order_payload(suffix, tenant_id=tenant_id)
@@ -273,14 +288,14 @@ def _run_fresh(api_url: str, console_url: str) -> dict[str, object]:
         "kill switch off failed",
     )
 
-    console_ok = _console_reachable(console_url)
+    _wait_for_console(console_url, wait_seconds)
     evidence = {
         "decision_id": decision_id,
         "order_id": f"order-e2e-{suffix}",
         "action": decision["recommendation"]["selected_action"],
         "execution_status": approved["execution"]["status"],
         "verification_status": verified["outcome"]["status"],
-        "console_reachable": console_ok,
+        "console_reachable": True,
         "tenant_id": tenant_id,
     }
     STATE_PATH.write_text(json.dumps(evidence, indent=2, sort_keys=True), encoding="utf-8")
@@ -315,7 +330,7 @@ def main() -> None:
     if args.replay:
         _run_replay(args.api_url)
         return
-    _run_fresh(args.api_url, args.console_url)
+    _run_fresh(args.api_url, args.console_url, args.wait_seconds)
 
 
 if __name__ == "__main__":
