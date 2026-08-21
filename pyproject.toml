@@ -69,3 +69,7 @@ python_version = "3.12"
 strict = true
 packages = ["promiseguard"]
 exclude = ["alembic", "evals"]
+
+[[tool.mypy.overrides]]
+module = ["joblib", "sklearn.*", "lightgbm"]
+ignore_missing_imports = true
