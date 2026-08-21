@@ -52,7 +52,9 @@ def redact(value: Any) -> Any:
 class JsonLogFormatter(logging.Formatter):
     """Emit stable JSON logs without serialising arbitrary request bodies."""
 
-    reserved: ClassVar[set[str]] = set(logging.LogRecord(None, 0, "", 0, "", (), None).__dict__)
+    reserved: ClassVar[set[str]] = set(
+        logging.LogRecord("promiseguard", 0, "", 0, "", (), None).__dict__
+    )
 
     def format(self, record: logging.LogRecord) -> str:
         payload: dict[str, Any] = {
