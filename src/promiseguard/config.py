@@ -90,7 +90,5 @@ class Settings:
             ),
             openai_max_output_tokens=int(os.getenv("OPENAI_MAX_OUTPUT_TOKENS", "320")),
             openai_timeout_seconds=float(os.getenv("OPENAI_TIMEOUT_SECONDS", "30")),
-            openai_reservation_ttl_seconds=int(
-                os.getenv("OPENAI_RESERVATION_TTL_SECONDS", "600")
-            ),
+            openai_reservation_ttl_seconds=int(os.getenv("OPENAI_RESERVATION_TTL_SECONDS", "600")),
         )

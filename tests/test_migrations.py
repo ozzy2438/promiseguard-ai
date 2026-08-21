@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from alembic import command
 from alembic.config import Config
 from sqlalchemy import create_engine, inspect
+
+from alembic import command
 
 
 def test_alembic_upgrade_creates_required_evidence_tables(tmp_path) -> None:

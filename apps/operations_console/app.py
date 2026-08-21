@@ -36,9 +36,7 @@ except Exception as exc:
     st.stop()
 
 st.sidebar.success(f"API ready · scorer {ready['scorer']}")
-st.sidebar.caption(
-    f"OpenAI: {ready['openai_agent']} · model {ready['openai_model']}"
-)
+st.sidebar.caption(f"OpenAI: {ready['openai_agent']} · model {ready['openai_model']}")
 st.sidebar.metric(
     "OpenAI budget remaining",
     f"US${float(openai_budget['remaining_usd']):.4f}",
@@ -67,9 +65,7 @@ if page == "Decisions":
             "order_id": item["order_id"],
             "risk": item["risk"]["failure_probability"],
             "selected_action": item["recommendation"]["selected_action"],
-            "incremental_value": item["recommendation"][
-                "expected_incremental_value_vs_no_action"
-            ],
+            "incremental_value": item["recommendation"]["expected_incremental_value_vs_no_action"],
             "policy": item["policy"]["disposition"],
             "control_version": item["policy"]["control_version"],
             "mode": item["mode"],

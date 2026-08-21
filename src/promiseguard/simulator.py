@@ -23,9 +23,7 @@ class RecoverySimulator:
 
     simulator_version = "counterfactual-rules-v2"
 
-    def simulate(
-        self, order: OrderContext, risk: RiskAssessment
-    ) -> tuple[RecoveryOption, ...]:
+    def simulate(self, order: OrderContext, risk: RiskAssessment) -> tuple[RecoveryOption, ...]:
         no_action_probability = round(1.0 - risk.failure_probability, 4)
         options = [
             self._build_option(
@@ -41,8 +39,7 @@ class RecoverySimulator:
         ]
 
         reroute_feasible = (
-            order.alternative_location_available
-            and order.alternative_location_id is not None
+            order.alternative_location_available and order.alternative_location_id is not None
         )
         options.append(
             self._build_option(
@@ -55,9 +52,7 @@ class RecoverySimulator:
                 feasible=reroute_feasible,
                 reversible=True,
                 confidence=min(risk.confidence, order.inventory_confidence),
-                constraints=(
-                    () if reroute_feasible else ("NO_VERIFIED_ALTERNATIVE_LOCATION",)
-                ),
+                constraints=(() if reroute_feasible else ("NO_VERIFIED_ALTERNATIVE_LOCATION",)),
             )
         )
 
@@ -110,12 +105,8 @@ class RecoverySimulator:
         success = Decimal(str(on_time_probability))
         failure = Decimal("1") - success
         expected_margin = _money(order.gross_margin * success)
-        expected_failure_cost = _money(
-            (order.cancellation_cost + order.support_cost) * failure
-        )
-        expected_net_value = _money(
-            expected_margin - expected_failure_cost - intervention_cost
-        )
+        expected_failure_cost = _money((order.cancellation_cost + order.support_cost) * failure)
+        expected_net_value = _money(expected_margin - expected_failure_cost - intervention_cost)
 
         if not feasible:
             expected_net_value = Decimal("-999999.00")

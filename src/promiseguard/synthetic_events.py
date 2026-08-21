@@ -53,8 +53,7 @@ class SyntheticEventStreamGenerator:
                     for index, envelope in enumerate(envelopes, start=1)
                 ]
 
-            for envelope in envelopes:
-                yield envelope
+            yield from envelopes
 
             if self.random.random() < duplicate_rate:
                 original = self.random.choice(envelopes)

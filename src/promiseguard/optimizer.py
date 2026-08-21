@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from decimal import Decimal
+from typing import ClassVar
 
 from promiseguard.models import (
     DecisionRecommendation,
@@ -16,7 +17,7 @@ class DecisionOptimizer:
 
     optimiser_version = "constrained-score-v2"
 
-    _tie_break_priority = {
+    _tie_break_priority: ClassVar[dict[RecoveryAction, int]] = {
         RecoveryAction.TAKE_NO_ACTION: 0,
         RecoveryAction.REROUTE: 1,
         RecoveryAction.CARRIER_UPGRADE: 2,

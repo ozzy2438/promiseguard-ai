@@ -3,11 +3,11 @@ from __future__ import annotations
 import os
 from logging.config import fileConfig
 
-from alembic import context
 from sqlalchemy import engine_from_config, pool
 
-from promiseguard.database import Base
+from alembic import context
 from promiseguard import db_models  # noqa: F401
+from promiseguard.database import Base
 
 config = context.config
 if config.config_file_name is not None:

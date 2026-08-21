@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from hashlib import sha256
-from typing import Any
 
 from promiseguard.autonomy import AutonomyController
 from promiseguard.database import Database
@@ -55,9 +54,7 @@ class SimulatedOperationsAdapter:
     def record_delivery_outcome(self, order_id: str, *, delivered_on_time: bool) -> None:
         self.delivery_outcomes[order_id] = delivered_on_time
 
-    def reserve_alternative(
-        self, *, order: OrderContext, idempotency_key: str
-    ) -> str:
+    def reserve_alternative(self, *, order: OrderContext, idempotency_key: str) -> str:
         step = "reserve_alternative"
         self._before(step)
         if order.alternative_location_id is None:
@@ -72,9 +69,7 @@ class SimulatedOperationsAdapter:
 
     def release_alternative(self, *, order: OrderContext) -> str:
         if order.alternative_location_id is not None:
-            self.alternative_reservations.discard(
-                (order.order_id, order.alternative_location_id)
-            )
+            self.alternative_reservations.discard((order.order_id, order.alternative_location_id))
         return f"released:{order.order_id}"
 
     def change_location(self, *, order: OrderContext, idempotency_key: str) -> str:
@@ -123,25 +118,17 @@ class SimulatedOperationsAdapter:
         self.split_shipments.discard(order.order_id)
         return f"cancelled-split:{order.order_id}"
 
-    def action_postcondition_holds(
-        self, *, order: OrderContext, action: RecoveryAction
-    ) -> bool:
+    def action_postcondition_holds(self, *, order: OrderContext, action: RecoveryAction) -> bool:
         if action is RecoveryAction.REROUTE:
             return (
                 order.alternative_location_id is not None
-                and self.order_locations.get(order.order_id)
-                == order.alternative_location_id
+                and self.order_locations.get(order.order_id) == order.alternative_location_id
             )
         if action is RecoveryAction.CARRIER_UPGRADE:
-            return (
-                self.carrier_services.get(order.order_id)
-                == order.upgraded_carrier_service
-            )
+            return self.carrier_services.get(order.order_id) == order.upgraded_carrier_service
         if action is RecoveryAction.SPLIT_SHIPMENT:
             return order.order_id in self.split_shipments
-        if action is RecoveryAction.TAKE_NO_ACTION:
-            return True
-        return False
+        return action is RecoveryAction.TAKE_NO_ACTION
 
     def _claim_key(self, key: str, operation: str) -> None:
         existing = self.applied_idempotency_keys.get(key)
@@ -260,14 +247,10 @@ class ActionGateway:
         reserve_key = f"{execution.command.idempotency_key}:reserve"
         change_key = f"{execution.command.idempotency_key}:change-location"
         try:
-            reference = self.adapter.reserve_alternative(
-                order=order, idempotency_key=reserve_key
-            )
+            reference = self.adapter.reserve_alternative(order=order, idempotency_key=reserve_key)
             steps.append(self._success_step(1, "reserve_alternative", now, reference))
             try:
-                reference = self.adapter.change_location(
-                    order=order, idempotency_key=change_key
-                )
+                reference = self.adapter.change_location(order=order, idempotency_key=change_key)
             except AmbiguousProviderTimeout:
                 if not self.adapter.action_postcondition_holds(
                     order=order, action=RecoveryAction.REROUTE

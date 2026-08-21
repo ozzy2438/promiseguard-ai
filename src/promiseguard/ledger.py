@@ -44,9 +44,7 @@ class InMemoryDecisionLedger:
             return trace
 
         if self._fingerprints[trace.decision_id] != fingerprint:
-            raise LedgerConflictError(
-                "decision replay conflicts with the immutable ledger record"
-            )
+            raise LedgerConflictError("decision replay conflicts with the immutable ledger record")
         return existing
 
     def get(self, decision_id: str) -> DecisionTrace | None:

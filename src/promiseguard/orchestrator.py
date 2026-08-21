@@ -65,9 +65,7 @@ class PromiseGuardOrchestrator:
         )
         return self.ledger.record(trace)
 
-    def _decision_id(
-        self, request: EvaluationRequest, policy: PolicyEvaluation
-    ) -> str:
+    def _decision_id(self, request: EvaluationRequest, policy: PolicyEvaluation) -> str:
         identity = "|".join(
             (
                 request.event.deduplication_key,

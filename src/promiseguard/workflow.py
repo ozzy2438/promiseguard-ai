@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime
 from decimal import Decimal
 from hashlib import sha256
 
@@ -194,9 +194,7 @@ class RecoveryWorkflowService:
         if request.order.restricted_product:
             raise ApprovalError("restricted products require operations-manager approval")
         if selected.intervention_cost > Decimal("20.00"):
-            raise ApprovalError(
-                "intervention exceeds the operations-analyst delegated cost limit"
-            )
+            raise ApprovalError("intervention exceeds the operations-analyst delegated cost limit")
 
     def _command_for_decision(
         self,

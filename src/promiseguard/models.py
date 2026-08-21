@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from decimal import Decimal
-from enum import Enum
+from enum import StrEnum
 from typing import Annotated, Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -20,7 +20,7 @@ class StrictModel(BaseModel):
     model_config = ConfigDict(extra="forbid", validate_assignment=True, frozen=True)
 
 
-class OperatingMode(str, Enum):
+class OperatingMode(StrEnum):
     OBSERVE = "OBSERVE"
     SHADOW = "SHADOW"
     RECOMMENDATION = "RECOMMENDATION"
@@ -28,7 +28,7 @@ class OperatingMode(str, Enum):
     BOUNDED_AUTONOMY = "BOUNDED_AUTONOMY"
 
 
-class RecoveryAction(str, Enum):
+class RecoveryAction(StrEnum):
     TAKE_NO_ACTION = "TAKE_NO_ACTION"
     REROUTE = "REROUTE"
     CARRIER_UPGRADE = "CARRIER_UPGRADE"
@@ -36,7 +36,7 @@ class RecoveryAction(str, Enum):
     HUMAN_ESCALATION = "HUMAN_ESCALATION"
 
 
-class PolicyDisposition(str, Enum):
+class PolicyDisposition(StrEnum):
     AUTO_EXECUTE = "AUTO_EXECUTE"
     REQUEST_APPROVAL = "REQUEST_APPROVAL"
     ESCALATE = "ESCALATE"
@@ -44,7 +44,7 @@ class PolicyDisposition(str, Enum):
     TAKE_NO_ACTION = "TAKE_NO_ACTION"
 
 
-class DecisionStatus(str, Enum):
+class DecisionStatus(StrEnum):
     OBSERVED = "OBSERVED"
     SHADOW_RECORDED = "SHADOW_RECORDED"
     RECOMMENDED = "RECOMMENDED"
@@ -53,14 +53,14 @@ class DecisionStatus(str, Enum):
     EXECUTION_NOT_IMPLEMENTED = "EXECUTION_NOT_IMPLEMENTED"
 
 
-class ApprovalStatus(str, Enum):
+class ApprovalStatus(StrEnum):
     PENDING = "PENDING"
     APPROVED = "APPROVED"
     REJECTED = "REJECTED"
     EXPIRED = "EXPIRED"
 
 
-class ActionStatus(str, Enum):
+class ActionStatus(StrEnum):
     PENDING = "PENDING"
     EXECUTING = "EXECUTING"
     SUCCEEDED = "SUCCEEDED"
@@ -70,27 +70,27 @@ class ActionStatus(str, Enum):
     MANUAL_RECOVERY_REQUIRED = "MANUAL_RECOVERY_REQUIRED"
 
 
-class StepStatus(str, Enum):
+class StepStatus(StrEnum):
     SUCCEEDED = "SUCCEEDED"
     FAILED = "FAILED"
     COMPENSATED = "COMPENSATED"
     SKIPPED = "SKIPPED"
 
 
-class VerificationStatus(str, Enum):
+class VerificationStatus(StrEnum):
     VERIFIED = "VERIFIED"
     FAILED = "FAILED"
     MANUAL_REVIEW_REQUIRED = "MANUAL_REVIEW_REQUIRED"
 
 
-class UserRole(str, Enum):
+class UserRole(StrEnum):
     OPERATIONS_ANALYST = "OPERATIONS_ANALYST"
     OPERATIONS_MANAGER = "OPERATIONS_MANAGER"
     AUDITOR = "AUDITOR"
     SERVICE_IDENTITY = "SERVICE_IDENTITY"
 
 
-class AutonomyLevel(str, Enum):
+class AutonomyLevel(StrEnum):
     OBSERVE = "OBSERVE"
     RECOMMEND = "RECOMMEND"
     APPROVAL_REQUIRED = "APPROVAL_REQUIRED"
@@ -98,7 +98,7 @@ class AutonomyLevel(str, Enum):
     SUSPENDED = "SUSPENDED"
 
 
-class SyntheticEventAnomaly(str, Enum):
+class SyntheticEventAnomaly(StrEnum):
     NONE = "NONE"
     DUPLICATE = "DUPLICATE"
     LATE_ARRIVAL = "LATE_ARRIVAL"
@@ -389,9 +389,7 @@ class AutonomyProfile(StrictModel):
 
     @field_validator("last_evidence_at", "updated_at")
     @classmethod
-    def require_control_timestamp_timezone(
-        cls, value: datetime | None
-    ) -> datetime | None:
+    def require_control_timestamp_timezone(cls, value: datetime | None) -> datetime | None:
         if value is not None and (value.tzinfo is None or value.utcoffset() is None):
             raise ValueError("autonomy timestamps must be timezone-aware")
         return value

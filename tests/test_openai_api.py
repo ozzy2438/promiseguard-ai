@@ -24,8 +24,7 @@ class ContextAwareFakeClient:
         disposition = PolicyDisposition(context["policy"]["disposition"])
         next_step = (
             AgentNextStep.SUBMIT_DECISION
-            if disposition
-            in {PolicyDisposition.AUTO_EXECUTE, PolicyDisposition.REQUEST_APPROVAL}
+            if disposition in {PolicyDisposition.AUTO_EXECUTE, PolicyDisposition.REQUEST_APPROVAL}
             else AgentNextStep.NO_ACTION
         )
         required = {

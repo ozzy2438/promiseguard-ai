@@ -67,9 +67,7 @@ class OutcomeVerificationService:
             action=execution.command.action,
         )
         delivered = self.adapter.delivery_outcomes.get(order.order_id)
-        if execution.status is ActionStatus.COMPENSATED:
-            status = VerificationStatus.FAILED
-        elif not action_postcondition:
+        if execution.status is ActionStatus.COMPENSATED or not action_postcondition:
             status = VerificationStatus.FAILED
         elif delivered is None:
             status = VerificationStatus.MANUAL_REVIEW_REQUIRED
@@ -85,9 +83,7 @@ class OutcomeVerificationService:
         if delivered is True:
             realised_margin = _money(order.gross_margin - actual_cost)
         elif delivered is False:
-            realised_margin = _money(
-                -order.cancellation_cost - order.support_cost - actual_cost
-            )
+            realised_margin = _money(-order.cancellation_cost - order.support_cost - actual_cost)
         else:
             realised_margin = Decimal("0.00")
 

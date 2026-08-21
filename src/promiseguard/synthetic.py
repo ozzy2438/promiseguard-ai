@@ -7,13 +7,14 @@ import math
 import random
 from collections.abc import Iterator
 from datetime import UTC, datetime, timedelta
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
+from typing import ClassVar
 
 from promiseguard.models import (
     EvaluationRequest,
-    OperationalEvent,
     OperatingMode,
+    OperationalEvent,
     OrderContext,
     RecoveryAction,
     SourceReference,
@@ -37,7 +38,7 @@ class SyntheticDataGenerator:
 
     fulfilment_centres = ("FC-MEL", "FC-SYD", "FC-BNE")
     stores = tuple(f"STORE-{index:02d}" for index in range(1, 16))
-    carriers = {
+    carriers: ClassVar[dict[str, float]] = {
         "AUSPOST_STANDARD": 0.89,
         "STARTRACK_STANDARD": 0.93,
     }
@@ -78,9 +79,7 @@ class SyntheticDataGenerator:
                 handle.write("\n")
         return destination
 
-    def _one(
-        self, *, index: int, start: datetime, mode: OperatingMode
-    ) -> SyntheticRecord:
+    def _one(self, *, index: int, start: datetime, mode: OperatingMode) -> SyntheticRecord:
         # Spread records across twelve months while preserving deterministic ordering.
         day_offset = self.random.randrange(0, 365)
         minute_offset = self.random.randrange(0, 24 * 60)
@@ -103,9 +102,7 @@ class SyntheticDataGenerator:
         carrier_service = self.random.choice(tuple(self.carriers))
         carrier_base = self.carriers[carrier_service]
         congestion = (0.12 if seasonal_peak else 0.03) + (0.03 if weekend else 0.0)
-        carrier_probability = _clip(
-            carrier_base - congestion + self.random.gauss(0.0, 0.035)
-        )
+        carrier_probability = _clip(carrier_base - congestion + self.random.gauss(0.0, 0.035))
 
         inventory_confidence = _clip(
             self.random.betavariate(18, 2) - (0.08 if seasonal_peak else 0.0),
@@ -161,9 +158,7 @@ class SyntheticDataGenerator:
         )
         split_possible = alternative_available and self.random.random() < 0.72
         split_on_time = (
-            _clip(max(reroute_on_time, carrier_upgrade_on_time) + 0.025)
-            if split_possible
-            else 0.0
+            _clip(max(reroute_on_time, carrier_upgrade_on_time) + 0.025) if split_possible else 0.0
         )
 
         order_id = f"order-{index + 1:07d}"
@@ -177,9 +172,7 @@ class SyntheticDataGenerator:
         )[0]
 
         refs = (
-            SourceReference(
-                system="oms", record_id=order_id, observed_at=evaluation_time
-            ),
+            SourceReference(system="oms", record_id=order_id, observed_at=evaluation_time),
             SourceReference(
                 system="wms",
                 record_id=f"inventory:{sku}:{current_location}",

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from decimal import Decimal
-from enum import Enum
+from enum import StrEnum
 from typing import Annotated
 
 from pydantic import Field, field_validator, model_validator
@@ -19,7 +19,7 @@ from promiseguard.models import (
 NonNegativeCost = Annotated[Decimal, Field(ge=Decimal("0"))]
 
 
-class AgentRationaleCode(str, Enum):
+class AgentRationaleCode(StrEnum):
     HIGHEST_EXPECTED_VALUE = "HIGHEST_EXPECTED_VALUE"
     REVERSIBLE_ACTION = "REVERSIBLE_ACTION"
     WITHIN_POLICY = "WITHIN_POLICY"
@@ -33,14 +33,14 @@ class AgentRationaleCode(str, Enum):
     KILL_SWITCH_ACTIVE = "KILL_SWITCH_ACTIVE"
 
 
-class AgentNextStep(str, Enum):
+class AgentNextStep(StrEnum):
     SUBMIT_DECISION = "SUBMIT_DECISION"
     WAIT_FOR_HUMAN = "WAIT_FOR_HUMAN"
     ESCALATE = "ESCALATE"
     NO_ACTION = "NO_ACTION"
 
 
-class AgentRunStatus(str, Enum):
+class AgentRunStatus(StrEnum):
     RESERVED = "RESERVED"
     COMPLETED = "COMPLETED"
     REJECTED = "REJECTED"

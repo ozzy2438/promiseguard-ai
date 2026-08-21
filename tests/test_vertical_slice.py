@@ -40,9 +40,7 @@ def test_take_no_action_can_be_economically_optimal(
             "inventory_available": True,
             "carrier_on_time_probability": 0.99,
             "hours_since_expected_scan": 0.0,
-            "promised_delivery_at": at_risk_request.order.evaluation_time.replace(
-                hour=23
-            ),
+            "promised_delivery_at": at_risk_request.order.evaluation_time.replace(hour=23),
             "reroute_cost": Decimal("60.00"),
             "carrier_upgrade_cost": Decimal("70.00"),
         }
@@ -86,11 +84,7 @@ def test_same_event_with_changed_business_context_is_rejected(
     orchestrator = PromiseGuardOrchestrator()
     orchestrator.evaluate(at_risk_request)
     changed = at_risk_request.model_copy(
-        update={
-            "order": at_risk_request.order.model_copy(
-                update={"reroute_cost": Decimal("9.50")}
-            )
-        }
+        update={"order": at_risk_request.order.model_copy(update={"reroute_cost": Decimal("9.50")})}
     )
 
     with pytest.raises(LedgerConflictError):

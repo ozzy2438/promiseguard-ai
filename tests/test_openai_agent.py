@@ -144,9 +144,7 @@ def test_agent_rejects_action_override_before_workflow_advances(
     decision = services.evaluation.evaluate(at_risk_request)
     valid = _valid_review(decision)
     alternate = next(
-        action
-        for action in RecoveryAction
-        if action is not decision.recommendation.selected_action
+        action for action in RecoveryAction if action is not decision.recommendation.selected_action
     )
     client = FakeResponsesClient(valid.model_copy(update={"selected_action": alternate}))
     agent = _service(services, client)

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from contextlib import asynccontextmanager
 import logging
+from contextlib import asynccontextmanager
 from time import perf_counter
 from typing import Any
 
@@ -88,9 +88,7 @@ def create_app(
 
     @app.middleware("http")
     async def correlation_middleware(request: Request, call_next):
-        correlation_id = normalise_correlation_id(
-            request.headers.get("X-Correlation-ID")
-        )
+        correlation_id = normalise_correlation_id(request.headers.get("X-Correlation-ID"))
         token = bind_correlation_id(correlation_id)
         started = perf_counter()
         try:
@@ -207,9 +205,7 @@ def create_app(
             "environment": services.settings.environment,
             "scorer": services.orchestrator.scorer.model_version,
             "kill_switch": str(services.autonomy.kill_switch().active).lower(),
-            "openai_agent": (
-                "available" if services.openai_agent.available else "disabled"
-            ),
+            "openai_agent": ("available" if services.openai_agent.available else "disabled"),
             "openai_model": services.settings.openai_model,
         }
 
@@ -343,9 +339,9 @@ def create_app(
         try:
             result = services.openai_agent.run(request)
         finally:
-            services.metrics.openai_latency.labels(
-                services.settings.openai_model
-            ).observe(perf_counter() - started)
+            services.metrics.openai_latency.labels(services.settings.openai_model).observe(
+                perf_counter() - started
+            )
         services.metrics.openai_runs.labels(
             result.run.status.value,
             result.run.model,

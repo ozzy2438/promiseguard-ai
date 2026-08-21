@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import argparse
-from datetime import UTC, datetime, timedelta
-from decimal import Decimal
 import json
 import os
+from datetime import UTC, datetime, timedelta
+from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
@@ -98,9 +98,7 @@ def main() -> None:
         auto_create_schema=True,
         openai_enabled=True,
         openai_model=os.getenv("OPENAI_MODEL", "gpt-5-nano"),
-        openai_budget_usd=min(
-            Decimal(os.getenv("OPENAI_BUDGET_USD", "3.00")), Decimal("3.00")
-        ),
+        openai_budget_usd=min(Decimal(os.getenv("OPENAI_BUDGET_USD", "3.00")), Decimal("3.00")),
         openai_per_run_limit_usd=min(
             Decimal(os.getenv("OPENAI_PER_RUN_LIMIT_USD", "0.001")),
             Decimal("0.001"),
@@ -125,9 +123,10 @@ def main() -> None:
                 review = run.run.review
                 assert review is not None
                 errors = []
-                if case.get("expected_action") and review.selected_action.value != case[
-                    "expected_action"
-                ]:
+                if (
+                    case.get("expected_action")
+                    and review.selected_action.value != case["expected_action"]
+                ):
                     errors.append("unexpected action")
                 if review.policy_disposition.value != case["expected_policy"]:
                     errors.append("unexpected policy")

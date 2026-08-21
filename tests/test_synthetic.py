@@ -20,9 +20,7 @@ def test_synthetic_generation_is_reproducible() -> None:
 
 
 def test_synthetic_jsonl_round_trip(tmp_path) -> None:
-    path = SyntheticDataGenerator(seed=11).write_jsonl(
-        tmp_path / "orders.jsonl", count=12
-    )
+    path = SyntheticDataGenerator(seed=11).write_jsonl(tmp_path / "orders.jsonl", count=12)
     lines = path.read_text(encoding="utf-8").splitlines()
 
     assert len(lines) == 12

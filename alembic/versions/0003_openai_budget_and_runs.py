@@ -3,6 +3,7 @@
 from collections.abc import Sequence
 
 import sqlalchemy as sa
+
 from alembic import op
 
 revision: str = "0003_openai_budget_and_runs"
@@ -41,14 +42,10 @@ def upgrade() -> None:
         sa.Column("review", sa.JSON(), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("completed_at", sa.DateTime(timezone=True), nullable=True),
-        sa.Column(
-            "reservation_expires_at", sa.DateTime(timezone=True), nullable=False
-        ),
+        sa.Column("reservation_expires_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("error_code", sa.String(length=160), nullable=True),
         sa.Column("validation_errors", sa.JSON(), nullable=False),
-        sa.ForeignKeyConstraint(
-            ["decision_id"], ["decisions.decision_id"], ondelete="CASCADE"
-        ),
+        sa.ForeignKeyConstraint(["decision_id"], ["decisions.decision_id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("run_id"),
     )
     op.create_index(

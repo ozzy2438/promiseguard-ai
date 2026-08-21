@@ -6,11 +6,10 @@ import json
 import os
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from decimal import Decimal
 from hashlib import sha256
 from typing import Any, Protocol
 
-from promiseguard.models import DecisionTrace, PolicyDisposition, RecoveryAction, WorkflowState
+from promiseguard.models import DecisionTrace, PolicyDisposition, WorkflowState
 from promiseguard.openai_budget import OpenAIBudgetManager
 from promiseguard.openai_cost import cost_for_usage, estimated_run_cost
 from promiseguard.openai_models import (
@@ -276,8 +275,7 @@ class OpenAIAgentService:
 
         def add_evidence(reference: Any) -> str:
             evidence_id = (
-                f"{reference.system}:{reference.record_id}:"
-                f"{reference.observed_at.isoformat()}"
+                f"{reference.system}:{reference.record_id}:{reference.observed_at.isoformat()}"
             )
             evidence[evidence_id] = {
                 "system": reference.system,

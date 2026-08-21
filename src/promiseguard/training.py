@@ -7,6 +7,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from hashlib import sha256
+from itertools import pairwise
 from pathlib import Path
 from typing import Any
 
@@ -36,7 +37,7 @@ def expected_calibration_error(
 ) -> float:
     boundaries = np.linspace(0.0, 1.0, bins + 1)
     error = 0.0
-    for lower, upper in zip(boundaries[:-1], boundaries[1:], strict=True):
+    for lower, upper in pairwise(boundaries):
         if upper == 1.0:
             mask = (probabilities >= lower) & (probabilities <= upper)
         else:
@@ -123,9 +124,7 @@ def train_risk_models(
             "pr_auc": float(average_precision_score(y_test, probabilities)),
             "roc_auc": float(roc_auc_score(y_test, probabilities)),
             "brier_score": float(brier_score_loss(y_test, probabilities)),
-            "expected_calibration_error": expected_calibration_error(
-                y_test, probabilities
-            ),
+            "expected_calibration_error": expected_calibration_error(y_test, probabilities),
             "holdout_prevalence": float(np.mean(y_test)),
             "holdout_size": float(len(y_test)),
         }
@@ -172,9 +171,7 @@ def train_risk_models(
         "training_records": len(records),
         "temporal_holdout_records": len(y_test),
     }
-    metrics_path.write_text(
-        json.dumps(metrics_payload, indent=2, sort_keys=True), encoding="utf-8"
-    )
+    metrics_path.write_text(json.dumps(metrics_payload, indent=2, sort_keys=True), encoding="utf-8")
     return TrainedModelSummary(
         artifact_path=artifact_path,
         metrics_path=metrics_path,

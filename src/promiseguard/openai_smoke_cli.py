@@ -27,9 +27,7 @@ def main() -> None:
         auto_create_schema=True,
         openai_enabled=True,
         openai_budget_usd=min(configured.openai_budget_usd, Decimal("3.00")),
-        openai_per_run_limit_usd=min(
-            configured.openai_per_run_limit_usd, Decimal("0.001")
-        ),
+        openai_per_run_limit_usd=min(configured.openai_per_run_limit_usd, Decimal("0.001")),
     )
     services = ServiceContainer.build(settings)
     try:
@@ -48,15 +46,11 @@ def main() -> None:
             "prompt_version": result.run.prompt_version,
             "actual_cost_usd": str(result.run.actual_cost_usd),
             "usage": (
-                result.run.usage.model_dump(mode="json")
-                if result.run.usage is not None
-                else None
+                result.run.usage.model_dump(mode="json") if result.run.usage is not None else None
             ),
             "budget": result.budget.model_dump(mode="json"),
             "review": (
-                result.run.review.model_dump(mode="json")
-                if result.run.review is not None
-                else None
+                result.run.review.model_dump(mode="json") if result.run.review is not None else None
             ),
             "reused_existing_run": result.reused_existing_run,
             "workflow_advanced": result.workflow is not None,

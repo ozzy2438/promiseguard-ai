@@ -110,16 +110,12 @@ class SyntheticValueEvaluator:
                 regret = _money(optimal_value - selected_value)
                 cost = self._action_cost(record.request.order, selected)
                 selected_probability = self._ground_truth_probability(record, selected)
-                no_action_probability = (
-                    record.ground_truth.no_action_on_time_probability
-                )
+                no_action_probability = record.ground_truth.no_action_on_time_probability
 
                 incremental_values.append(incremental)
                 regrets.append(max(Decimal("0"), regret))
                 intervention_costs.append(cost)
-                probability_uplifts.append(
-                    selected_probability - no_action_probability
-                )
+                probability_uplifts.append(selected_probability - no_action_probability)
 
                 if selected is not RecoveryAction.TAKE_NO_ACTION:
                     interventions += 1
@@ -144,9 +140,7 @@ class SyntheticValueEvaluator:
             optimiser_version=self.optimiser.optimiser_version,
             intervention_rate=interventions / record_count,
             action_agreement_with_ground_truth=correct_actions / record_count,
-            false_intervention_rate=(
-                false_interventions / interventions if interventions else 0.0
-            ),
+            false_intervention_rate=(false_interventions / interventions if interventions else 0.0),
             mean_on_time_probability_uplift=sum(probability_uplifts) / record_count,
             simulated_incremental_value=total_incremental,
             simulated_intervention_cost=total_cost,
@@ -192,16 +186,12 @@ class SyntheticValueEvaluator:
         action: RecoveryAction,
     ) -> float:
         probabilities = {
-            RecoveryAction.TAKE_NO_ACTION: (
-                record.ground_truth.no_action_on_time_probability
-            ),
+            RecoveryAction.TAKE_NO_ACTION: (record.ground_truth.no_action_on_time_probability),
             RecoveryAction.REROUTE: record.ground_truth.reroute_on_time_probability,
             RecoveryAction.CARRIER_UPGRADE: (
                 record.ground_truth.carrier_upgrade_on_time_probability
             ),
-            RecoveryAction.SPLIT_SHIPMENT: (
-                record.ground_truth.split_shipment_on_time_probability
-            ),
+            RecoveryAction.SPLIT_SHIPMENT: (record.ground_truth.split_shipment_on_time_probability),
         }
         if action not in probabilities:
             raise ValueError(f"action {action.value} has no synthetic ground truth")

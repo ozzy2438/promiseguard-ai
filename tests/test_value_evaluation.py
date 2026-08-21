@@ -18,9 +18,7 @@ def test_value_evaluation_is_reproducible_and_truthfully_labelled() -> None:
     assert 0 <= first.false_intervention_rate <= 1
     assert first.mean_regret >= 0
     assert sum(first.selected_action_counts.values()) == 500
-    assert first.to_json_dict()["evidence_classification"] == (
-        "SYNTHETIC_COUNTERFACTUAL_BACKTEST"
-    )
+    assert first.to_json_dict()["evidence_classification"] == ("SYNTHETIC_COUNTERFACTUAL_BACKTEST")
 
 
 def test_value_evaluation_rejects_empty_input() -> None:

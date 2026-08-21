@@ -7,7 +7,7 @@ import logging
 import re
 from contextvars import ContextVar, Token
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, ClassVar
 from uuid import uuid4
 
 _CORRELATION_PATTERN = re.compile(r"^[A-Za-z0-9._:-]{8,128}$")
@@ -41,11 +41,7 @@ def redact(value: Any) -> Any:
 
     if isinstance(value, dict):
         return {
-            str(key): (
-                "[REDACTED]"
-                if _SENSITIVE_KEY_PATTERN.search(str(key))
-                else redact(item)
-            )
+            str(key): ("[REDACTED]" if _SENSITIVE_KEY_PATTERN.search(str(key)) else redact(item))
             for key, item in value.items()
         }
     if isinstance(value, (list, tuple)):
@@ -56,7 +52,7 @@ def redact(value: Any) -> Any:
 class JsonLogFormatter(logging.Formatter):
     """Emit stable JSON logs without serialising arbitrary request bodies."""
 
-    reserved = set(logging.LogRecord(None, 0, "", 0, "", (), None).__dict__)
+    reserved: ClassVar[set[str]] = set(logging.LogRecord(None, 0, "", 0, "", (), None).__dict__)
 
     def format(self, record: logging.LogRecord) -> str:
         payload: dict[str, Any] = {

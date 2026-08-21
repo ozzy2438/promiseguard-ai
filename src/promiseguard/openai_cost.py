@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from decimal import Decimal, ROUND_UP
+from decimal import ROUND_UP, Decimal
 from math import ceil
 
 from promiseguard.openai_models import AgentTokenUsage

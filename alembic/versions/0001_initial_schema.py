@@ -3,6 +3,7 @@
 from collections.abc import Sequence
 
 import sqlalchemy as sa
+
 from alembic import op
 
 revision: str = "0001_initial_schema"
@@ -65,9 +66,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("approval_id"),
     )
     op.create_index("ix_approvals_decision_id", "approvals", ["decision_id"])
-    op.create_index(
-        "ix_approvals_status_requested_at", "approvals", ["status", "requested_at"]
-    )
+    op.create_index("ix_approvals_status_requested_at", "approvals", ["status", "requested_at"])
     op.create_table(
         "actions",
         sa.Column("action_id", sa.String(length=64), nullable=False),

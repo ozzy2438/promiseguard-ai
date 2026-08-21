@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta
 from decimal import Decimal
 
 import pytest
@@ -162,9 +162,7 @@ def test_earned_bounded_autonomy_executes_without_approval(
     evaluation_time: datetime,
 ) -> None:
     _earn_reroute_autonomy(services, evaluation_time)
-    request = at_risk_request.model_copy(
-        update={"mode": OperatingMode.BOUNDED_AUTONOMY}
-    )
+    request = at_risk_request.model_copy(update={"mode": OperatingMode.BOUNDED_AUTONOMY})
     trace = services.evaluation.evaluate(request)
 
     assert trace.policy.execution_allowed is True
@@ -194,9 +192,7 @@ def test_kill_switch_blocks_new_bounded_decisions_and_direct_execution(
     )
     assert enabled.active is True
 
-    request = at_risk_request.model_copy(
-        update={"mode": OperatingMode.BOUNDED_AUTONOMY}
-    )
+    request = at_risk_request.model_copy(update={"mode": OperatingMode.BOUNDED_AUTONOMY})
     trace = services.evaluation.evaluate(request)
     assert trace.policy.reasons == ("GLOBAL_ACTION_KILL_SWITCH_ACTIVE",)
 
@@ -316,9 +312,7 @@ def test_control_version_changes_immutable_decision_identity(
     services: ServiceContainer,
     at_risk_request: EvaluationRequest,
 ) -> None:
-    request = at_risk_request.model_copy(
-        update={"mode": OperatingMode.BOUNDED_AUTONOMY}
-    )
+    request = at_risk_request.model_copy(update={"mode": OperatingMode.BOUNDED_AUTONOMY})
     before = services.evaluation.evaluate(request)
 
     services.autonomy.set_kill_switch(

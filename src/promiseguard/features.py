@@ -22,9 +22,7 @@ FEATURE_NAMES = (
 
 
 def extract_features(order: OrderContext) -> list[float]:
-    hours_to_promise = (
-        order.promised_delivery_at - order.evaluation_time
-    ).total_seconds() / 3_600
+    hours_to_promise = (order.promised_delivery_at - order.evaluation_time).total_seconds() / 3_600
     return [
         float(order.inventory_reserved),
         float(order.inventory_available),

@@ -90,9 +90,7 @@ class EventRepository:
         session.flush()
         return row
 
-    def get_request_payload(
-        self, session: Session, *, event_id: str
-    ) -> dict[str, Any] | None:
+    def get_request_payload(self, session: Session, *, event_id: str) -> dict[str, Any] | None:
         row = session.scalar(
             select(OperationalEventRow)
             .where(OperationalEventRow.event_id == event_id)
@@ -132,9 +130,7 @@ class DecisionRepository:
     def count(self, session: Session) -> int:
         return len(session.scalars(select(DecisionRow.decision_id)).all())
 
-    def list_recent(
-        self, session: Session, *, limit: int = 100
-    ) -> tuple[DecisionTrace, ...]:
+    def list_recent(self, session: Session, *, limit: int = 100) -> tuple[DecisionTrace, ...]:
         rows = session.scalars(
             select(DecisionRow).order_by(DecisionRow.created_at.desc()).limit(limit)
         ).all()
@@ -172,9 +168,7 @@ class ApprovalRepository:
         row = session.get(ApprovalRow, approval_id)
         return None if row is None else self._to_model(row)
 
-    def get_by_decision(
-        self, session: Session, decision_id: str
-    ) -> ApprovalRecord | None:
+    def get_by_decision(self, session: Session, decision_id: str) -> ApprovalRecord | None:
         row = session.scalar(
             select(ApprovalRow)
             .where(ApprovalRow.decision_id == decision_id)
@@ -317,8 +311,7 @@ class OutcomeRepository:
                 realised_gross_margin=outcome.realised_gross_margin,
                 estimated_incremental_value=outcome.estimated_incremental_value,
                 evidence_references=[
-                    ref.model_dump(mode="json")
-                    for ref in outcome.evidence_references
+                    ref.model_dump(mode="json") for ref in outcome.evidence_references
                 ],
                 details=outcome.details,
                 fingerprint=fingerprint,

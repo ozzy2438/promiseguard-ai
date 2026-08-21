@@ -116,8 +116,7 @@ class PolicyGateway:
         )
         autonomy_conditions = (
             selected.intervention_cost <= self.max_autonomous_cost,
-            recommendation.expected_incremental_value_vs_no_action
-            >= self.min_autonomous_benefit,
+            recommendation.expected_incremental_value_vs_no_action >= self.min_autonomous_benefit,
             selected.confidence >= self.min_autonomous_confidence,
             selected.reversible,
         )

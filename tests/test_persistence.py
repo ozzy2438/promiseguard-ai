@@ -46,9 +46,7 @@ def test_event_inbox_rejects_conflicting_replay(
     service.evaluate(at_risk_request)
     changed = at_risk_request.model_copy(
         update={
-            "order": at_risk_request.order.model_copy(
-                update={"gross_margin": Decimal("999.00")}
-            )
+            "order": at_risk_request.order.model_copy(update={"gross_margin": Decimal("999.00")})
         }
     )
 
@@ -64,9 +62,7 @@ def test_sql_decision_ledger_rejects_conflicting_trace(
     orchestrator.evaluate(at_risk_request)
     changed = at_risk_request.model_copy(
         update={
-            "order": at_risk_request.order.model_copy(
-                update={"reroute_cost": Decimal("10.25")}
-            )
+            "order": at_risk_request.order.model_copy(update={"reroute_cost": Decimal("10.25")})
         }
     )
 

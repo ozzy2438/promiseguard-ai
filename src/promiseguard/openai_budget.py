@@ -101,14 +101,17 @@ class OpenAIBudgetManager:
                 raise OpenAIBudgetExceededError(
                     "OpenAI application budget would be exceeded before the request"
                 )
-            attempt = int(
-                session.scalar(
-                    select(func.count(OpenAIRunRow.run_id)).where(
-                        OpenAIRunRow.request_key == request_key
+            attempt = (
+                int(
+                    session.scalar(
+                        select(func.count(OpenAIRunRow.run_id)).where(
+                            OpenAIRunRow.request_key == request_key
+                        )
                     )
+                    or 0
                 )
-                or 0
-            ) + 1
+                + 1
+            )
             run_id = self._run_id(request_key, attempt)
             row = OpenAIRunRow(
                 run_id=run_id,
@@ -292,9 +295,7 @@ class OpenAIBudgetManager:
         return row
 
     @staticmethod
-    def _reclaim_stale(
-        session: Session, budget: OpenAIBudgetRow, now: datetime
-    ) -> None:
+    def _reclaim_stale(session: Session, budget: OpenAIBudgetRow, now: datetime) -> None:
         stale = session.scalars(
             select(OpenAIRunRow).where(
                 OpenAIRunRow.status == AgentRunStatus.RESERVED.value,

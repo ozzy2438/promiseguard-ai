@@ -43,9 +43,7 @@ def test_persistent_approval_execution_and_verification_api(
     evaluation_time,
 ) -> None:
     with _client() as client:
-        approval_request = at_risk_request.model_copy(
-            update={"mode": OperatingMode.APPROVAL}
-        )
+        approval_request = at_risk_request.model_copy(update={"mode": OperatingMode.APPROVAL})
 
         evaluation = client.post(
             "/v1/evaluate",
@@ -174,9 +172,7 @@ def test_autonomy_profile_api_exposes_evidence_gate() -> None:
             "CARRIER_UPGRADE",
             "SPLIT_SHIPMENT",
         }
-        assert all(
-            profile["level"] == "APPROVAL_REQUIRED" for profile in listed.json()
-        )
+        assert all(profile["level"] == "APPROVAL_REQUIRED" for profile in listed.json())
 
         denied = client.post(
             "/v1/autonomy/REROUTE",

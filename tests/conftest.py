@@ -52,9 +52,7 @@ def at_risk_request(evaluation_time: datetime) -> EvaluationRequest:
             carrier_upgrade_cost=Decimal("17.00"),
             data_freshness_minutes=3,
             source_references=(
-                SourceReference(
-                    system="oms", record_id="order-001", observed_at=evaluation_time
-                ),
+                SourceReference(system="oms", record_id="order-001", observed_at=evaluation_time),
                 SourceReference(
                     system="wms", record_id="inventory-001", observed_at=evaluation_time
                 ),

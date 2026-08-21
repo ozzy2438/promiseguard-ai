@@ -83,9 +83,7 @@ class ServiceContainer:
             database,
             limit_usd=resolved.openai_budget_usd,
             per_run_limit_usd=resolved.openai_per_run_limit_usd,
-            reservation_ttl=timedelta(
-                seconds=resolved.openai_reservation_ttl_seconds
-            ),
+            reservation_ttl=timedelta(seconds=resolved.openai_reservation_ttl_seconds),
         )
         # Create or reconcile the budget row during startup. This makes the first live
         # reservation race-free on PostgreSQL and surfaces invalid budget reductions early.

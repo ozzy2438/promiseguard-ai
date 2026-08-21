@@ -13,9 +13,7 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=20260820)
     parser.add_argument("--output", default="data/generated/orders.jsonl")
     args = parser.parse_args()
-    destination = SyntheticDataGenerator(seed=args.seed).write_jsonl(
-        args.output, count=args.count
-    )
+    destination = SyntheticDataGenerator(seed=args.seed).write_jsonl(args.output, count=args.count)
     print(destination)
 
 
