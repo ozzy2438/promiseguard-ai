@@ -66,6 +66,10 @@ OPENAI_TIMEOUT_SECONDS=30
   project or key;
 - a final live smoke run must occur in an environment that holds `OPENAI_API_KEY`.
 
+The owner-run live smoke has been recorded as
+`docs/assurance/evidence/openai-live-smoke-owner-run.json`. Further live calls are not required
+for this assurance record.
+
 ## Rejected alternatives
 
 - **Unbounded Agents SDK tool loop:** unnecessary because the application already owns the durable

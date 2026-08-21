@@ -6,6 +6,7 @@ from datetime import UTC, datetime, timedelta
 from hashlib import sha256
 
 from promiseguard.database import Database
+from promiseguard.identity import assert_separation_of_duties, bind_claimed_role
 from promiseguard.models import (
     ApprovalDecisionInput,
     ApprovalRecord,
@@ -14,7 +15,11 @@ from promiseguard.models import (
     RecoveryAction,
     UserRole,
 )
-from promiseguard.persistence import ApprovalRepository, RecordNotFoundError
+from promiseguard.persistence import (
+    ApprovalRepository,
+    PersistenceConflictError,
+    RecordNotFoundError,
+)
 
 
 class ApprovalError(RuntimeError):
@@ -120,6 +125,7 @@ class ApprovalService:
             UserRole.SERVICE_IDENTITY,
         }:
             raise ApprovalError("actor role is not authorised to decide approvals")
+        bind_claimed_role(decision_input.actor_id, decision_input.actor_role)
         decided_at = _utc(now or datetime.now(UTC))
         expired = False
         result: ApprovalRecord | None = None
@@ -129,11 +135,16 @@ class ApprovalService:
                 raise RecordNotFoundError(f"approval {approval_id!r} not found")
             if record.status is not ApprovalStatus.PENDING:
                 raise ApprovalError("approval is no longer pending")
+            assert_separation_of_duties(
+                requested_by=record.requested_by,
+                decided_by=decision_input.actor_id,
+            )
             if decided_at > _utc(record.expires_at):
-                result = self.repository.update(
-                    session,
-                    record.model_copy(update={"status": ApprovalStatus.EXPIRED}),
-                )
+                expired_record = record.model_copy(update={"status": ApprovalStatus.EXPIRED})
+                try:
+                    result = self.repository.update_if_pending(session, expired_record)
+                except PersistenceConflictError as exc:
+                    raise ApprovalError("approval is no longer pending") from exc
                 expired = True
             else:
                 updated = record.model_copy(
@@ -145,7 +156,10 @@ class ApprovalService:
                         "decided_at": decided_at,
                     }
                 )
-                result = self.repository.update(session, updated)
+                try:
+                    result = self.repository.update_if_pending(session, updated)
+                except PersistenceConflictError as exc:
+                    raise ApprovalError("approval is no longer pending") from exc
         if expired:
             raise ApprovalError("approval has expired")
         assert result is not None

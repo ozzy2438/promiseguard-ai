@@ -36,6 +36,24 @@ The primary incremental-value figure already includes intervention cost in each 
 truth expected value. `simulated_gross_uplift_before_intervention_cost` is included only as a
 reconciliation view and must not be added to the primary value figure.
 
+## Experimental designs
+
+Local V1 implements:
+
+- explicit **no-action baseline** inside the optimiser;
+- a **synthetic counterfactual backtest** with known ground truth;
+- **shadow-mode** recording without execution, so a later observed outcome can be compared with
+  the unused recommendation.
+
+The following designs are specified but **not implemented against live orders**:
+
+- randomised or holdout **control group**;
+- **matched comparison group**;
+- other quasi-experimental designs.
+
+Those require operational assignment and live OMS outcomes. Until they exist, do not claim causal
+real-world value. See `src/promiseguard/value_design.py` and `GET /v1/value/designs`.
+
 ## Reproduce
 
 ```bash

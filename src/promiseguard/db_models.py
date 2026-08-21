@@ -55,6 +55,9 @@ class DecisionRow(Base):
     decision_id: Mapped[str] = mapped_column(String(64), primary_key=True)
     event_id: Mapped[str] = mapped_column(String(120), nullable=False, index=True)
     order_id: Mapped[str] = mapped_column(String(120), nullable=False, index=True)
+    tenant_id: Mapped[str] = mapped_column(
+        String(80), nullable=False, default="local-default", index=True
+    )
     trace: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
     fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
@@ -209,3 +212,19 @@ class OpenAIRunRow(Base):
     )
     error_code: Mapped[str | None] = mapped_column(String(160))
     validation_errors: Mapped[list[str]] = mapped_column(JSON, nullable=False)
+
+
+class OperatorFeedbackRow(Base):
+    __tablename__ = "operator_feedback"
+    __table_args__ = (Index("ix_operator_feedback_decision_created", "decision_id", "created_at"),)
+
+    feedback_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    decision_id: Mapped[str] = mapped_column(
+        ForeignKey("decisions.decision_id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    actor_id: Mapped[str] = mapped_column(String(120), nullable=False)
+    actor_role: Mapped[str] = mapped_column(String(40), nullable=False)
+    useful: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    expected_outcome_matched: Mapped[bool | None]
+    comment: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)

@@ -62,12 +62,16 @@ The GitHub live workflow is `workflow_dispatch` only and additionally requires t
 
 ## Claim boundary
 
-Until a live run artifact exists, documentation may claim:
+Offline documentation may claim:
 
 - provider adapter implemented;
 - structured output schema validated offline;
 - application budget enforcement tested;
 - live execution ready.
 
-It must not claim that the live OpenAI call passed, that a model achieved a production accuracy
-rate, or that real business value was created.
+The owner-run live smoke in `docs/assurance/evidence/openai-live-smoke-owner-run.json` additionally
+records that one `gpt-5-nano` structured review completed, passed deterministic validation, used
+1,712 tokens and cost US$0.000170 under the US$3 application ceiling.
+
+It must not claim that a model achieved a production accuracy rate, that real business value was
+created, or that further live calls were made.

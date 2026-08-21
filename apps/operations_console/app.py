@@ -37,6 +37,8 @@ except Exception as exc:
 
 st.sidebar.success(f"API ready · scorer {ready['scorer']}")
 st.sidebar.caption(f"OpenAI: {ready['openai_agent']} · model {ready['openai_model']}")
+st.sidebar.caption(f"Identity: {ready.get('identity_mode', 'local-permissive')}")
+st.sidebar.caption("Local roles are bound in the console; federation is a pilot-phase concern.")
 st.sidebar.metric(
     "OpenAI budget remaining",
     f"US${float(openai_budget['remaining_usd']):.4f}",
@@ -142,6 +144,26 @@ elif page == "Decision detail":
                 "outcome": state.get("outcome"),
             }
         )
+        st.subheader("Operator feedback")
+        feedback_comment = st.text_area(
+            "Reviewer comment",
+            value="Shadow recommendation matches the evidence I would have used.",
+            key=f"feedback-{decision_id}",
+        )
+        useful = st.checkbox("Decision was useful", value=True, key=f"useful-{decision_id}")
+        if st.button("Record operator feedback", key=f"fb-btn-{decision_id}"):
+            recorded = api_post(
+                f"/v1/decisions/{decision_id}/feedback",
+                {
+                    "actor_id": "operations-analyst-ui",
+                    "actor_role": "OPERATIONS_ANALYST",
+                    "useful": useful,
+                    "expected_outcome_matched": None,
+                    "comment": feedback_comment,
+                },
+            )
+            st.success(recorded["feedback_id"])
+        st.json(api_get(f"/v1/decisions/{decision_id}/feedback"))
 
 elif page == "OpenAI budget & review":
     st.subheader("Application-enforced OpenAI budget")

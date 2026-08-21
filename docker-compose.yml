@@ -6,7 +6,7 @@ services:
       POSTGRES_USER: promiseguard
       POSTGRES_PASSWORD: promiseguard-local-only
     ports:
-      - "5432:5432"
+      - "5433:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U promiseguard -d promiseguard"]
       interval: 5s
@@ -22,6 +22,7 @@ services:
         postgresql+psycopg://promiseguard:promiseguard-local-only@postgres:5432/promiseguard
       AUTO_CREATE_SCHEMA: "false"
       PROMISEGUARD_ENV: local-docker
+      PROMISEGUARD_STRICT_LOCAL_IDENTITY: "true"
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_ENABLED: ${OPENAI_ENABLED:-auto}
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-5-nano}
@@ -31,9 +32,33 @@ services:
       OPENAI_TIMEOUT_SECONDS: ${OPENAI_TIMEOUT_SECONDS:-30}
       OPENAI_RESERVATION_TTL_SECONDS: ${OPENAI_RESERVATION_TTL_SECONDS:-600}
     ports:
-      - "8000:8000"
+      - "${PROMISEGUARD_API_PORT:-8000}:8000"
     depends_on:
       postgres:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=3).read()",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 25s
+
+  console:
+    build:
+      context: .
+      dockerfile: Dockerfile.console
+    environment:
+      PROMISEGUARD_API_URL: http://api:8000
+    ports:
+      - "${PROMISEGUARD_CONSOLE_PORT:-8501}:8501"
+    depends_on:
+      api:
         condition: service_healthy
 
 volumes:

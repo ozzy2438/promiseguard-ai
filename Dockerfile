@@ -9,6 +9,7 @@ COPY src ./src
 COPY apps ./apps
 COPY alembic.ini ./
 COPY alembic ./alembic
+COPY scripts ./scripts
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -e ".[postgres,agent]"
 

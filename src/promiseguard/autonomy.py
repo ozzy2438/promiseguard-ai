@@ -12,6 +12,7 @@ from promiseguard.db_models import (
     AutonomyProfileRow,
     RuntimeControlRow,
 )
+from promiseguard.identity import bind_claimed_role
 from promiseguard.models import (
     ActionExecution,
     ActionStatus,
@@ -50,6 +51,7 @@ class AutonomyController:
 
     def set_kill_switch(self, update: KillSwitchUpdateInput) -> KillSwitchState:
         self._require_manager(update.actor_role)
+        bind_claimed_role(update.actor_id, update.actor_role)
         now = datetime.now(UTC)
         with self.database.session() as session:
             row = session.scalar(
@@ -86,6 +88,7 @@ class AutonomyController:
         update: AutonomyUpdateInput,
     ) -> AutonomyProfile:
         self._require_manager(update.actor_role)
+        bind_claimed_role(update.actor_id, update.actor_role)
         if action in {RecoveryAction.TAKE_NO_ACTION, RecoveryAction.HUMAN_ESCALATION}:
             raise AutonomyControlError("non-executable action has no autonomy profile")
         now = datetime.now(UTC)

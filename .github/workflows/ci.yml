@@ -69,6 +69,28 @@ jobs:
       - name: Compile
         run: python -m compileall -q src apps scripts alembic evals
 
+  local-stack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Start production-like local stack
+        run: docker compose up --build -d
+      - name: End-to-end API, console, workflow and persistence probe
+        run: python scripts/local_e2e.py --wait-seconds 180
+      - name: Restart API and prove durable evidence
+        run: |
+          docker compose restart api
+          python scripts/local_e2e.py --replay --wait-seconds 180
+      - name: Collect logs on failure
+        if: failure()
+        run: docker compose logs --no-color
+      - name: Stop local stack
+        if: always()
+        run: docker compose down -v
+
   postgres-migration:
     runs-on: ubuntu-latest
     services:

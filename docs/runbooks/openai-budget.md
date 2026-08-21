@@ -28,7 +28,9 @@ promiseguard-openai-smoke
 ```
 
 This performs one structured review, does not advance the workflow and prints only safe run, token,
-cost and validation metadata.
+cost and validation metadata. The completed owner-run result is recorded in
+`docs/assurance/openai-live-smoke.md`. Do not run another live smoke merely to refresh that
+artifact.
 
 ## Respond to a budget block
 

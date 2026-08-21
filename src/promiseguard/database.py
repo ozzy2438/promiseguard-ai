@@ -27,7 +27,7 @@ class Database:
                 }
             )
         elif url.startswith("sqlite"):
-            engine_kwargs["connect_args"] = {"check_same_thread": False}
+            engine_kwargs["connect_args"] = {"check_same_thread": False, "timeout": 30}
 
         self.engine: Engine = create_engine(url, **engine_kwargs)
         self.session_factory = sessionmaker(

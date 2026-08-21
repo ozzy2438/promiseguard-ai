@@ -50,8 +50,8 @@ source event
 - manager-only autonomy changes with recorded rationale;
 - evidence gate before bounded autonomy;
 - automatic profile suspension after failed or compensated autonomous execution;
-- reroute, carrier-upgrade and split-shipment adapters;
-- idempotency, ambiguous-timeout verification and compensating actions;
+- reroute, carrier-upgrade and split-shipment adapters with versioned OMS/WMS/carrier contracts;
+- idempotency, ambiguous-timeout verification and compensating actions for all three writes;
 - independent postcondition and outcome verification.
 
 ### Budget-bounded OpenAI layer
@@ -86,11 +86,14 @@ work when it is disabled or no key is present.
 - real retailer, carrier, payment or customer-message integrations;
 - enterprise identity federation;
 - AWS deployment;
-- production revenue claims.
+- production revenue claims;
+- operational UAT results.
 
 Synthetic and test results must always be labelled as simulated, backtested or production-like.
-The live OpenAI provider path must be labelled **ready but unverified** until an explicit smoke or
-live-eval artifact is produced in an environment holding `OPENAI_API_KEY`.
+The live OpenAI provider path has an owner-run smoke artifact for `gpt-5-nano` (1,712 tokens,
+US$0.000170, deterministic validation passed). See `docs/assurance/openai-live-smoke.md`. Offline
+CI still never calls the provider. Do not treat that smoke result as production accuracy or
+business-value evidence.
 
 ## Evidence snapshot
 
@@ -119,10 +122,13 @@ reports and claim boundaries.
 
 ## Local setup
 
+Supported local runtime is **Python 3.12**. See `docs/engineering/python-runtime.md`.
+
 ```bash
-python -m venv .venv
+python3.12 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev,ml,postgres,agent]"
+make python-version
 pytest -m "not live_openai"
 python evals/run_local.py
 ```
@@ -143,9 +149,19 @@ API documentation is available at `/docs`.
 docker compose up --build
 ```
 
-The API applies Alembic migrations before starting. The password in `docker-compose.yml` is
-intentionally development-only. When `OPENAI_API_KEY` is exported in the launching shell, Compose
-passes it to the API container without writing it into the repository.
+The API applies Alembic migrations before starting. Streamlit defaults to `8501`. PostgreSQL is
+published on host port `5433` so it does not collide with a local Postgres on `5432`. API/console
+host ports can be overridden with `PROMISEGUARD_API_PORT` and `PROMISEGUARD_CONSOLE_PORT`. The
+password in `docker-compose.yml` is intentionally development-only. When `OPENAI_API_KEY` is exported in the
+launching shell, Compose passes it to the API container without writing it into the repository.
+
+Prove the integrated stack, including restart persistence:
+
+```bash
+python3.12 scripts/local_e2e.py --wait-seconds 120
+docker compose restart api
+python3.12 scripts/local_e2e.py --replay --wait-seconds 120
+```
 
 ## OpenAI budget configuration
 
