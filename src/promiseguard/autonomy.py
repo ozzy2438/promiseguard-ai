@@ -239,32 +239,36 @@ class AutonomyController:
 
     @classmethod
     def _profile_model(cls, row: AutonomyProfileRow) -> AutonomyProfile:
-        return AutonomyProfile(
-            action=row.action,
-            level=row.level,
-            verified_successes=row.verified_successes,
-            consecutive_verified_successes=row.consecutive_verified_successes,
-            compensation_count=row.compensation_count,
-            failure_count=row.failure_count,
-            recommended_for_promotion=(
-                row.consecutive_verified_successes >= cls.promotion_threshold
-                and row.level != AutonomyLevel.BOUNDED_AUTONOMY.value
-            ),
-            reason=row.reason,
-            last_evidence_at=ensure_utc(row.last_evidence_at),
-            updated_by=row.updated_by,
-            updated_at=ensure_utc(row.updated_at),
-            version=row.version,
+        return AutonomyProfile.model_validate(
+            {
+                "action": row.action,
+                "level": row.level,
+                "verified_successes": row.verified_successes,
+                "consecutive_verified_successes": row.consecutive_verified_successes,
+                "compensation_count": row.compensation_count,
+                "failure_count": row.failure_count,
+                "recommended_for_promotion": (
+                    row.consecutive_verified_successes >= cls.promotion_threshold
+                    and row.level != AutonomyLevel.BOUNDED_AUTONOMY.value
+                ),
+                "reason": row.reason,
+                "last_evidence_at": ensure_utc(row.last_evidence_at),
+                "updated_by": row.updated_by,
+                "updated_at": ensure_utc(row.updated_at),
+                "version": row.version,
+            }
         )
 
     @staticmethod
     def _kill_switch_model(row: RuntimeControlRow) -> KillSwitchState:
-        return KillSwitchState(
-            active=row.enabled,
-            reason=row.reason,
-            updated_by=row.updated_by,
-            updated_at=ensure_utc(row.updated_at),
-            version=row.version,
+        return KillSwitchState.model_validate(
+            {
+                "active": row.enabled,
+                "reason": row.reason,
+                "updated_by": row.updated_by,
+                "updated_at": ensure_utc(row.updated_at),
+                "version": row.version,
+            }
         )
 
     @staticmethod
