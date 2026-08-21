@@ -22,7 +22,7 @@ from promiseguard.openai_models import (
 )
 from promiseguard.workflow import RecoveryWorkflowService
 
-PROMPT_VERSION = "promiseguard-openai-review-v1"
+PROMPT_VERSION = "promiseguard-openai-review-v2"
 
 _INSTRUCTIONS = """You are the bounded PromiseGuard orchestration review agent.
 You review an immutable, deterministic decision trace. You are not the calculator, optimiser,
