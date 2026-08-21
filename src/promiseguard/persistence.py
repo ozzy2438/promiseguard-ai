@@ -198,18 +198,20 @@ class ApprovalRepository:
 
     @staticmethod
     def _to_model(row: ApprovalRow) -> ApprovalRecord:
-        return ApprovalRecord(
-            approval_id=row.approval_id,
-            decision_id=row.decision_id,
-            requested_action=row.requested_action,
-            status=row.status,
-            requested_by=row.requested_by,
-            requested_at=ensure_utc(row.requested_at),
-            expires_at=ensure_utc(row.expires_at),
-            decided_by=row.decided_by,
-            decided_by_role=row.decided_by_role,
-            decision_reason=row.decision_reason,
-            decided_at=ensure_utc(row.decided_at),
+        return ApprovalRecord.model_validate(
+            {
+                "approval_id": row.approval_id,
+                "decision_id": row.decision_id,
+                "requested_action": row.requested_action,
+                "status": row.status,
+                "requested_by": row.requested_by,
+                "requested_at": ensure_utc(row.requested_at),
+                "expires_at": ensure_utc(row.expires_at),
+                "decided_by": row.decided_by,
+                "decided_by_role": row.decided_by_role,
+                "decision_reason": row.decision_reason,
+                "decided_at": ensure_utc(row.decided_at),
+            }
         )
 
 
@@ -326,16 +328,18 @@ class OutcomeRepository:
 
     @staticmethod
     def _to_model(row: OutcomeRow) -> OutcomeVerification:
-        return OutcomeVerification(
-            outcome_id=row.outcome_id,
-            decision_id=row.decision_id,
-            action_id=row.action_id,
-            status=row.status,
-            verified_at=ensure_utc(row.verified_at),
-            on_time_delivery_observed=row.on_time_delivery_observed,
-            actual_intervention_cost=row.actual_intervention_cost,
-            realised_gross_margin=row.realised_gross_margin,
-            estimated_incremental_value=row.estimated_incremental_value,
-            evidence_references=tuple(row.evidence_references),
-            details=row.details,
+        return OutcomeVerification.model_validate(
+            {
+                "outcome_id": row.outcome_id,
+                "decision_id": row.decision_id,
+                "action_id": row.action_id,
+                "status": row.status,
+                "verified_at": ensure_utc(row.verified_at),
+                "on_time_delivery_observed": row.on_time_delivery_observed,
+                "actual_intervention_cost": row.actual_intervention_cost,
+                "realised_gross_margin": row.realised_gross_margin,
+                "estimated_incremental_value": row.estimated_incremental_value,
+                "evidence_references": row.evidence_references,
+                "details": row.details,
+            }
         )
