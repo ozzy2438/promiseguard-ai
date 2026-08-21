@@ -7,10 +7,13 @@ simulating counterfactual recovery options, selecting the strongest feasible act
 policy and human-approval controls, executing reversible interventions, independently verifying
 outcomes and recording decision-level value evidence.
 
-## Current milestone: complete local production-like reference implementation
+## Current maturity: local production-like (not pilot-ready)
 
-This branch now implements the complete local Version 1 control loop, excluding only real external
-enterprise integrations and AWS deployment:
+This repository implements the complete local Version 1 control loop. That is **local
+production-like**. It is not live OMS/WMS/carrier integration, not operational UAT, not
+pilot-ready, and not AWS deployment-ready.
+
+The loop excludes only real external enterprise integrations and AWS deployment:
 
 ```text
 source event
@@ -77,7 +80,7 @@ work when it is disabled or no key is present.
 - outcome/value ledger and machine-readable synthetic value evaluation;
 - Prometheus metrics and a Streamlit operations console;
 - dbt decision-outcome, autonomy-assurance and OpenAI cost-assurance marts;
-- Docker Compose for local PostgreSQL;
+- Docker Compose for local PostgreSQL, FastAPI and the Streamlit operations console;
 - CI, migration, persistence, model, security, budget and failure-injection tests;
 - ADRs, threat models, runbooks, model card and assurance evidence.
 
@@ -119,6 +122,13 @@ The committed data/ML evidence was reproduced with seed `20260820` and 100,000 s
 These figures are synthetic backtest evidence, not real company revenue. See
 `docs/assurance/evidence/` and `docs/assurance/value-evaluation.md` for exact machine-readable
 reports and claim boundaries.
+
+Owner-workstation Docker evidence is `docs/assurance/evidence/local-stack-e2e.json`
+(`LOCAL_DOCKER_INTEGRATION`). It is not live OMS/WMS/carrier integration. GitHub Actions
+`local-stack` is the CI counterpart of that probe.
+
+`docs/assurance/evidence/milestone-2-local-validation.json` is a historical 2026-08-20 snapshot
+(Python 3.13.5, Docker unavailable, OpenAI deferred). It is not the current validation record.
 
 ## Local setup
 

@@ -67,11 +67,12 @@ Offline documentation may claim:
 - provider adapter implemented;
 - structured output schema validated offline;
 - application budget enforcement tested;
-- live execution ready.
+- live path implemented; ordinary CI never calls the provider.
 
 The owner-run live smoke in `docs/assurance/evidence/openai-live-smoke-owner-run.json` additionally
 records that one `gpt-5-nano` structured review completed, passed deterministic validation, used
 1,712 tokens and cost US$0.000170 under the US$3 application ceiling.
 
 It must not claim that a model achieved a production accuracy rate, that real business value was
-created, or that further live calls were made.
+created, or that further live calls were made. Do not describe that smoke as production accuracy,
+business-value evidence, or GitHub CI evidence.

@@ -1,10 +1,15 @@
 # Milestone 2 evidence — local production-like governed control loop
 
+> Historical 2026-08-20 snapshot. Current maturity, Docker e2e and owner-run OpenAI smoke are in
+> `README.md`, `docs/assurance/evidence/local-stack-e2e.json` and
+> `docs/assurance/openai-live-smoke.md`. Do not treat this file as the current validation record.
+
 - **Evidence date:** 2026-08-20
 - **Evidence classification:** production-like local implementation with synthetic data
 - **Branch:** `chatgpt/project-prompt`
 - **Cloud deployment:** intentionally deferred
-- **OpenAI model integration:** intentionally deferred until the project owner supplies credentials
+- **OpenAI model integration:** intentionally deferred at the time of this snapshot; a later
+  owner-run live smoke is recorded separately in `docs/assurance/openai-live-smoke.md`
 
 ## Implemented scope
 
