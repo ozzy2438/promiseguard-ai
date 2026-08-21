@@ -308,8 +308,6 @@ class OpenAIBudgetManager:
                 Decimal("0"),
                 Decimal(budget.reserved_usd) - reserved,
             )
-            # A process may have crashed after the provider accepted the request. Charge the
-            # full reservation rather than silently reopening budget that might already be spent.
             budget.spent_usd = Decimal(budget.spent_usd) + reserved
             row.status = AgentRunStatus.FAILED.value
             row.actual_cost_usd = reserved
@@ -344,23 +342,25 @@ class OpenAIBudgetManager:
         created_at = ensure_utc(row.created_at)
         if created_at is None:
             raise ValueError("persisted OpenAI run is missing created_at")
-        return AgentRunRecord(
-            run_id=row.run_id,
-            request_key=row.request_key,
-            decision_id=row.decision_id,
-            model=row.model,
-            prompt_version=row.prompt_version,
-            status=row.status,
-            context_fingerprint=row.context_fingerprint,
-            reserved_cost_usd=row.reserved_cost_usd,
-            actual_cost_usd=row.actual_cost_usd,
-            usage=usage,
-            response_id=row.response_id,
-            review=row.review,
-            created_at=created_at,
-            completed_at=ensure_utc(row.completed_at),
-            error_code=row.error_code,
-            validation_errors=tuple(row.validation_errors or []),
+        return AgentRunRecord.model_validate(
+            {
+                "run_id": row.run_id,
+                "request_key": row.request_key,
+                "decision_id": row.decision_id,
+                "model": row.model,
+                "prompt_version": row.prompt_version,
+                "status": row.status,
+                "context_fingerprint": row.context_fingerprint,
+                "reserved_cost_usd": row.reserved_cost_usd,
+                "actual_cost_usd": row.actual_cost_usd,
+                "usage": usage,
+                "response_id": row.response_id,
+                "review": row.review,
+                "created_at": created_at,
+                "completed_at": ensure_utc(row.completed_at),
+                "error_code": row.error_code,
+                "validation_errors": tuple(row.validation_errors or []),
+            }
         )
 
     @staticmethod
